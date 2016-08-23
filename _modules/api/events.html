@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.events &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="../../index.html" />
+    <link rel="up" title="api" href="../api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for api.events</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">faf.api</span> <span class="kn">import</span> <span class="n">PlayerEventSchema</span>
+<span class="kn">from</span> <span class="nn">faf.api.event_schema</span> <span class="kn">import</span> <span class="n">EventSchema</span>
+<span class="kn">from</span> <span class="nn">flask_jwt</span> <span class="kn">import</span> <span class="n">jwt_required</span><span class="p">,</span> <span class="n">current_identity</span>
+<span class="kn">from</span> <span class="nn">api</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">faf.db</span> <span class="kn">as</span> <span class="nn">db</span>
+<span class="kn">from</span> <span class="nn">api.query_commons</span> <span class="kn">import</span> <span class="n">fetch_data</span>
+
+<span class="n">MAX_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="n">EVENTS_TABLE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;event_definitions events</span>
+<span class="s2">                    LEFT OUTER JOIN messages name_langReg</span>
+<span class="s2">                        ON events.name_key = name_langReg.key</span>
+<span class="s2">                            AND name_langReg.language = </span><span class="si">%(language)s</span><span class="s2"></span>
+<span class="s2">                            AND name_langReg.region = </span><span class="si">%(region)s</span><span class="s2"></span>
+<span class="s2">                    LEFT OUTER JOIN messages name_lang</span>
+<span class="s2">                        ON events.name_key = name_lang.key</span>
+<span class="s2">                            AND name_lang.language = </span><span class="si">%(language)s</span><span class="s2"></span>
+<span class="s2">                    LEFT OUTER JOIN messages name_def</span>
+<span class="s2">                        ON events.name_key = name_def.key</span>
+<span class="s2">                            AND name_def.language = &#39;en&#39;</span>
+<span class="s2">                            AND name_def.region = &#39;US&#39;&quot;&quot;&quot;</span>
+
+<span class="n">EVENTS_SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;events.id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;image_url&#39;</span><span class="p">:</span> <span class="s1">&#39;events.image_url&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;events.type&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;COALESCE(name_langReg.value, name_lang.value, name_def.value)&#39;</span>
+<span class="p">}</span>
+
+<span class="n">PLAYER_EVENTS_SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;player_id&#39;</span><span class="p">:</span> <span class="s1">&#39;player_id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;event_id&#39;</span><span class="p">:</span> <span class="s1">&#39;event_id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="s1">&#39;count&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/events&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="events_list"><a class="viewcode-back" href="../../api.html#api.events.events_list">[docs]</a><span class="k">def</span> <span class="nf">events_list</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists all event definitions.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /events</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;attributes&quot;: {</span>
+<span class="sd">                &quot;id&quot;: &quot;15b6c19a-6084-4e82-ada9-6c30e282191f&quot;,</span>
+<span class="sd">                &quot;image_url&quot;: null,</span>
+<span class="sd">                &quot;name&quot;: &quot;Seraphim wins&quot;,</span>
+<span class="sd">                &quot;type&quot;: &quot;NUMERIC&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;id&quot;: &quot;15b6c19a-6084-4e82-ada9-6c30e282191f&quot;,</span>
+<span class="sd">              &quot;type&quot;: &quot;event&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            ...</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :query string language: The preferred language to use for strings returned by this method. default is en.</span>
+<span class="sd">    :query string region: The preferred region to use for strings returned by this method. default is US.</span>
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">language</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;language&#39;</span><span class="p">,</span> <span class="s1">&#39;en&#39;</span><span class="p">)</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">EventSchema</span><span class="p">(),</span> <span class="n">EVENTS_TABLE</span><span class="p">,</span> <span class="n">EVENTS_SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span>
+                      <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;language&#39;</span><span class="p">:</span> <span class="n">language</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">:</span> <span class="n">region</span><span class="p">})</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/events/recordMultiple&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_events&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="events_record_multiple"><a class="viewcode-back" href="../../api.html#api.events.events_record_multiple">[docs]</a><span class="k">def</span> <span class="nf">events_record_multiple</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Records multiple events for the currently authenticated player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /events/recordMultiple</span>
+
+<span class="sd">       {</span>
+<span class="sd">          &quot;updates&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;event_id&quot;: string,</span>
+<span class="sd">              &quot;count&quot;: long</span>
+<span class="sd">            }</span>
+<span class="sd">          ]</span>
+<span class="sd">       }</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;updated_events&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;event_id&quot;: string,</span>
+<span class="sd">              &quot;count&quot;: long</span>
+<span class="sd">            }</span>
+<span class="sd">          ],</span>
+<span class="sd">        }</span>
+
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">record_multiple</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">])</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/players/&lt;int:player_id&gt;/events&#39;</span><span class="p">)</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;read_events&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="events_list_player"><a class="viewcode-back" href="../../api.html#api.events.events_list_player">[docs]</a><span class="k">def</span> <span class="nf">events_list_player</span><span class="p">(</span><span class="n">player_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists the events for a player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /players/781/events</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;id&quot;: string,</span>
+<span class="sd">              &quot;attributes&quot;: {</span>
+<span class="sd">                  &quot;event_id&quot;: string,</span>
+<span class="sd">                  &quot;count&quot;: integer,</span>
+<span class="sd">                  &quot;create_time&quot;: long,</span>
+<span class="sd">                  &quot;update_time&quot;: long</span>
+<span class="sd">              }</span>
+<span class="sd">            }</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">select_expressions</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">PLAYER_EVENTS_SELECT_EXPRESSIONS</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">select_expressions</span><span class="p">[</span><span class="s1">&#39;player_id&#39;</span><span class="p">]</span>
+
+    <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;player_id = </span><span class="si">%s</span><span class="s1">&#39;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">player_id</span><span class="p">])</span>
+
+    <span class="n">id_filter</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filter[event_id]&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">id_filter</span><span class="p">:</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">id_filter</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND event_id IN ({})&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)))</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">PlayerEventSchema</span><span class="p">(),</span> <span class="s1">&#39;player_events&#39;</span><span class="p">,</span> <span class="n">select_expressions</span><span class="p">,</span>
+                      <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/jwt/events/recordMultiple&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@jwt_required</span><span class="p">()</span>
+<div class="viewcode-block" id="jwt_events_record_multiple"><a class="viewcode-back" href="../../api.html#api.events.jwt_events_record_multiple">[docs]</a><span class="k">def</span> <span class="nf">jwt_events_record_multiple</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">record_multiple</span><span class="p">(</span><span class="n">current_identity</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">])</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/events/&lt;event_id&gt;/record&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_events&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="events_record"><a class="viewcode-back" href="../../api.html#api.events.events_record">[docs]</a><span class="k">def</span> <span class="nf">events_record</span><span class="p">(</span><span class="n">event_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">record_event</span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="record_event"><a class="viewcode-back" href="../../api.html#api.events.record_event">[docs]</a><span class="k">def</span> <span class="nf">record_event</span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Records an event. This function is NOT an endpoint.</span>
+
+<span class="sd">    :return:</span>
+<span class="sd">        If successful, this method returns a dictionary with the following structure::</span>
+
+<span class="sd">            {</span>
+<span class="sd">              &quot;count&quot;: long</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO player_events (player_id, event_id, count)</span>
+<span class="s2">                        VALUES</span>
+<span class="s2">                            (</span><span class="si">%(player_id)s</span><span class="s2">, </span><span class="si">%(event_id)s</span><span class="s2">, </span><span class="si">%(count)s</span><span class="s2">)</span>
+<span class="s2">                        ON DUPLICATE KEY UPDATE</span>
+<span class="s2">                            count = count + VALUES(count)&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">{</span>
+                           <span class="s1">&#39;player_id&#39;</span><span class="p">:</span> <span class="n">player_id</span><span class="p">,</span>
+                           <span class="s1">&#39;event_id&#39;</span><span class="p">:</span> <span class="n">event_id</span><span class="p">,</span>
+                           <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
+                       <span class="p">})</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT</span>
+<span class="s2">                            count</span>
+<span class="s2">                        FROM player_events</span>
+<span class="s2">                        WHERE event_id = </span><span class="si">%s</span><span class="s2"> AND player_id = </span><span class="si">%s</span><span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">(</span><span class="n">event_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="record_multiple"><a class="viewcode-back" href="../../api.html#api.events.record_multiple">[docs]</a><span class="k">def</span> <span class="nf">record_multiple</span><span class="p">(</span><span class="n">player_id</span><span class="p">,</span> <span class="n">updates</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;updated_events&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+
+    <span class="k">for</span> <span class="n">update</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+        <span class="n">event_id</span> <span class="o">=</span> <span class="n">update</span><span class="p">[</span><span class="s1">&#39;event_id&#39;</span><span class="p">]</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">update</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span>
+
+        <span class="n">update_result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">)</span>
+        <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">record_event</span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">count</span><span class="p">)[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;updated_events&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">update_result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../api.html">api</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

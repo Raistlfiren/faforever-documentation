@@ -1,0 +1,457 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.maps &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="../../index.html" />
+    <link rel="up" title="api" href="../api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for api.maps</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+
+<span class="kn">from</span> <span class="nn">faf.api.map_schema</span> <span class="kn">import</span> <span class="n">MapSchema</span>
+<span class="kn">from</span> <span class="nn">faf.tools.fa.maps</span> <span class="kn">import</span> <span class="n">generate_map_previews</span><span class="p">,</span> <span class="n">parse_map_info</span><span class="p">,</span> <span class="n">generate_folder_name</span><span class="p">,</span> <span class="n">generate_zip</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">werkzeug.utils</span> <span class="kn">import</span> <span class="n">secure_filename</span>
+
+<span class="kn">from</span> <span class="nn">api</span> <span class="kn">import</span> <span class="n">app</span><span class="p">,</span> <span class="n">oauth</span>
+<span class="kn">from</span> <span class="nn">api.error</span> <span class="kn">import</span> <span class="n">ApiException</span><span class="p">,</span> <span class="n">Error</span><span class="p">,</span> <span class="n">ErrorCode</span>
+<span class="kn">from</span> <span class="nn">api.query_commons</span> <span class="kn">import</span> <span class="n">fetch_data</span>
+<span class="kn">from</span> <span class="nn">faf</span> <span class="kn">import</span> <span class="n">db</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+<span class="n">ALLOWED_EXTENSIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;zip&#39;</span><span class="p">]</span>
+<span class="n">MAX_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="n">SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;map.id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;display_name&#39;</span><span class="p">:</span> <span class="s1">&#39;map.display_name&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;version.description&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;max_players&#39;</span><span class="p">:</span> <span class="s1">&#39;version.max_players&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;map_type&#39;</span><span class="p">:</span> <span class="s1">&#39;map.map_type&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;battle_type&#39;</span><span class="p">:</span> <span class="s1">&#39;map.battle_type&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="s1">&#39;version.width&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="s1">&#39;version.height&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;author&#39;</span><span class="p">:</span> <span class="s1">&#39;l.login&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;version.version&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ranked&#39;</span><span class="p">:</span> <span class="s2">&quot;IF(version.ranked &gt; 0, &#39;true&#39;, &#39;false&#39;)&quot;</span><span class="p">,</span>
+    <span class="c1"># download_url will be URL encoded and made absolute in enricher</span>
+    <span class="s1">&#39;download_url&#39;</span><span class="p">:</span> <span class="s2">&quot;version.filename&quot;</span><span class="p">,</span>
+    <span class="c1"># thumbnail_url_small will be URL encoded and made absolute in enricher</span>
+    <span class="s1">&#39;thumbnail_url_small&#39;</span><span class="p">:</span> <span class="s2">&quot;REPLACE(REPLACE(version.filename, &#39;.zip&#39;, &#39;.png&#39;), &#39;maps/&#39;, &#39;&#39;)&quot;</span><span class="p">,</span>
+    <span class="c1"># thumbnail_url_large will be URL encoded and made absolute in enricher</span>
+    <span class="s1">&#39;thumbnail_url_large&#39;</span><span class="p">:</span> <span class="s2">&quot;REPLACE(REPLACE(version.filename, &#39;.zip&#39;, &#39;.png&#39;), &#39;maps/&#39;, &#39;&#39;)&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;technical_name&#39;</span><span class="p">:</span> <span class="s2">&quot;SUBSTRING(version.filename, LOCATE(&#39;/&#39;, version.filename)+1, LOCATE(&#39;.zip&#39;, version.filename)-6)&quot;</span><span class="p">,</span>
+    <span class="s1">&#39;downloads&#39;</span><span class="p">:</span> <span class="s1">&#39;COALESCE(features.downloads, 0)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;num_draws&#39;</span><span class="p">:</span> <span class="s1">&#39;COALESCE(features.num_draws, 0)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;rating&#39;</span><span class="p">:</span> <span class="s1">&#39;features.rating&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;times_played&#39;</span><span class="p">:</span> <span class="s1">&#39;COALESCE(features.times_played, 0)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;create_time&#39;</span><span class="p">:</span> <span class="s1">&#39;version.create_time&#39;</span>
+<span class="p">}</span>
+
+<span class="n">TABLE</span> <span class="o">=</span> <span class="s1">&#39;map &#39;</span> \
+        <span class="s1">&#39;LEFT JOIN table_map_features features ON features.map_id = map.id &#39;</span> \
+        <span class="s1">&#39;JOIN map_version version ON version.map_id = map.id &#39;</span> \
+        <span class="s1">&#39;LEFT JOIN login l ON l.id = map.author&#39;</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/maps/upload&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;upload_map&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="maps_upload"><a class="viewcode-back" href="../../api.html#api.maps.maps_upload">[docs]</a><span class="k">def</span> <span class="nf">maps_upload</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a new map in the system</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /maps/upload</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        &quot;ok&quot;</span>
+
+<span class="sd">    :query file file: The file submitted (Must be ZIP)</span>
+<span class="sd">    :type: zip</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">file</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">)</span>
+    <span class="n">metadata_string</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;metadata&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">file</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">UPLOAD_FILE_MISSING</span><span class="p">)])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">metadata_string</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">UPLOAD_METADATA_MISSING</span><span class="p">)])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file_allowed</span><span class="p">(</span><span class="nb">file</span><span class="o">.</span><span class="n">filename</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">UPLOAD_INVALID_FILE_EXTENSION</span><span class="p">,</span> <span class="o">*</span><span class="n">ALLOWED_EXTENSIONS</span><span class="p">)])</span>
+
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">metadata_string</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">temp_dir</span><span class="p">:</span>
+        <span class="n">temp_map_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="n">secure_filename</span><span class="p">(</span><span class="nb">file</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
+        <span class="nb">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">temp_map_path</span><span class="p">)</span>
+        <span class="n">process_uploaded_map</span><span class="p">(</span><span class="n">temp_map_path</span><span class="p">,</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;is_ranked&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="s2">&quot;ok&quot;</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/maps&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="maps"><a class="viewcode-back" href="../../api.html#api.maps.maps">[docs]</a><span class="k">def</span> <span class="nf">maps</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists all map definitions.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /maps</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;attributes&quot;: {</span>
+<span class="sd">                &quot;battle_type&quot;: &quot;FFA&quot;,</span>
+<span class="sd">                &quot;description&quot;: &quot;&lt;LOC canis3v3_Description&gt;&quot;,</span>
+<span class="sd">                &quot;display_name&quot;: &quot;canis3v3&quot;,</span>
+<span class="sd">                &quot;download_url&quot;: &quot;http://content.faforever.com/faf/vault/maps/canis3v3.v0001.zip&quot;,</span>
+<span class="sd">                &quot;downloads&quot;: 5970,</span>
+<span class="sd">                &quot;id&quot;: 0,</span>
+<span class="sd">                &quot;map_type&quot;: &quot;skirmish&quot;,</span>
+<span class="sd">                &quot;max_players&quot;: 6,</span>
+<span class="sd">                &quot;num_draws&quot;: 0,</span>
+<span class="sd">                &quot;rating&quot;: 2.94119,</span>
+<span class="sd">                &quot;technical_name&quot;: &quot;canis3v3.v0001&quot;,</span>
+<span class="sd">                &quot;thumbnail_url_large&quot;: &quot;http://content.faforever.com/faf/vault/map_previews/large/canis3v3.v0001.png&quot;,</span>
+<span class="sd">                &quot;thumbnail_url_small&quot;: &quot;http://content.faforever.com/faf/vault/map_previews/small/canis3v3.v0001.png&quot;,</span>
+<span class="sd">                &quot;times_played&quot;: 1955,</span>
+<span class="sd">                &quot;version&quot;: &quot;1&quot;,</span>
+<span class="sd">                &quot;author&quot;: &quot;Someone&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;id&quot;: 0,</span>
+<span class="sd">              &quot;type&quot;: &quot;map&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            ...</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">many</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">filename_filter</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;filter[technical_name]&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filename_filter</span><span class="p">:</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39; filename = </span><span class="si">%s</span><span class="s1">&#39;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="s1">&#39;maps/&#39;</span> <span class="o">+</span> <span class="n">filename_filter</span> <span class="o">+</span> <span class="s1">&#39;.zip&#39;</span>
+        <span class="n">many</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">MapSchema</span><span class="p">(),</span> <span class="n">TABLE</span><span class="p">,</span> <span class="n">SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+                         <span class="n">many</span><span class="o">=</span><span class="n">many</span><span class="p">,</span> <span class="n">enricher</span><span class="o">=</span><span class="n">enricher</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/maps/ladder1v1&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;GET&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="laddermaps"><a class="viewcode-back" href="../../api.html#api.maps.laddermaps">[docs]</a><span class="k">def</span> <span class="nf">laddermaps</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists all maps of the current ladder map pool ( for 1v1)</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /maps/ladder1v1</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;attributes&quot;: {</span>
+<span class="sd">                &quot;battle_type&quot;: &quot;FFA&quot;,</span>
+<span class="sd">                &quot;description&quot;: &quot;&lt;LOC canis3v3_Description&gt;&quot;,</span>
+<span class="sd">                &quot;display_name&quot;: &quot;canis3v3&quot;,</span>
+<span class="sd">                &quot;download_url&quot;: &quot;http://content.faforever.com/faf/vault/maps/canis3v3.v0001.zip&quot;,</span>
+<span class="sd">                &quot;downloads&quot;: 5970,</span>
+<span class="sd">                &quot;id&quot;: 0,</span>
+<span class="sd">                &quot;map_type&quot;: &quot;skirmish&quot;,</span>
+<span class="sd">                &quot;max_players&quot;: 6,</span>
+<span class="sd">                &quot;num_draws&quot;: 0,</span>
+<span class="sd">                &quot;rating&quot;: 2.94119,</span>
+<span class="sd">                &quot;technical_name&quot;: &quot;canis3v3.v0001&quot;,</span>
+<span class="sd">                &quot;thumbnail_url_large&quot;: &quot;http://content.faforever.com/faf/vault/map_previews/large/maps/canis3v3.v0001.zip&quot;,</span>
+<span class="sd">                &quot;thumbnail_url_small&quot;: &quot;http://content.faforever.com/faf/vault/map_previews/small/maps/canis3v3.v0001.zip&quot;,</span>
+<span class="sd">                &quot;times_played&quot;: 1955,</span>
+<span class="sd">                &quot;version&quot;: &quot;1&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;id&quot;: 0,</span>
+<span class="sd">              &quot;type&quot;: &quot;map&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            ...</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">LADDER_TABLE</span> <span class="o">=</span> <span class="s2">&quot;( {} ) JOIN ladder_map ON map.id = ladder_map.idmap&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">TABLE</span><span class="p">)</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">MapSchema</span><span class="p">(),</span> <span class="n">LADDER_TABLE</span><span class="p">,</span> <span class="n">SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">enricher</span><span class="o">=</span> <span class="n">enricher</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="enricher"><a class="viewcode-back" href="../../api.html#api.maps.enricher">[docs]</a><span class="k">def</span> <span class="nf">enricher</span><span class="p">(</span><span class="nb">map</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s1">&#39;thumbnail_url_small&#39;</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_small&#39;</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_small&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_small&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;{}/faf/vault/map_previews/small/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;CONTENT_URL&#39;</span><span class="p">],</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_small&#39;</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="s1">&#39;thumbnail_url_large&#39;</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_large&#39;</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_large&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_large&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;{}/faf/vault/map_previews/large/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;CONTENT_URL&#39;</span><span class="p">],</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">map</span><span class="p">[</span><span class="s1">&#39;thumbnail_url_large&#39;</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="s1">&#39;download_url&#39;</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">:</span>
+        <span class="nb">map</span><span class="p">[</span><span class="s1">&#39;download_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;{}/faf/vault/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;CONTENT_URL&#39;</span><span class="p">],</span>
+                                                       <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="nb">map</span><span class="p">[</span><span class="s1">&#39;download_url&#39;</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="file_allowed"><a class="viewcode-back" href="../../api.html#api.maps.file_allowed">[docs]</a><span class="k">def</span> <span class="nf">file_allowed</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">filename</span> <span class="ow">and</span> \
+           <span class="n">filename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ALLOWED_EXTENSIONS</span></div>
+
+
+<div class="viewcode-block" id="process_uploaded_map"><a class="viewcode-back" href="../../api.html#api.maps.process_uploaded_map">[docs]</a><span class="k">def</span> <span class="nf">process_uploaded_map</span><span class="p">(</span><span class="n">temp_map_path</span><span class="p">,</span> <span class="n">is_ranked</span><span class="p">):</span>
+    <span class="n">map_info</span> <span class="o">=</span> <span class="n">parse_map_info</span><span class="p">(</span><span class="n">temp_map_path</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">validate_map_info</span><span class="p">(</span><span class="n">map_info</span><span class="p">)</span>
+
+    <span class="n">display_name</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;display_name&#39;</span><span class="p">]</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span>
+    <span class="n">max_players</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;max_players&#39;</span><span class="p">]</span>
+    <span class="n">map_type</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+    <span class="n">battle_type</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;battle_type&#39;</span><span class="p">]</span>
+
+    <span class="n">size</span> <span class="o">=</span> <span class="n">map_info</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">display_name</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_NAME_TOO_LONG</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">display_name</span><span class="p">))])</span>
+
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">can_upload_map</span><span class="p">(</span><span class="n">display_name</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_NOT_ORIGINAL_AUTHOR</span><span class="p">,</span> <span class="n">display_name</span><span class="p">)])</span>
+
+    <span class="k">if</span> <span class="n">map_exists</span><span class="p">(</span><span class="n">display_name</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_VERSION_EXISTS</span><span class="p">,</span> <span class="n">display_name</span><span class="p">,</span> <span class="n">version</span><span class="p">)])</span>
+
+    <span class="n">zip_file_path</span> <span class="o">=</span> <span class="n">generate_zip</span><span class="p">(</span><span class="n">temp_map_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">temp_map_path</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="p">))</span>
+    <span class="n">zip_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">zip_file_path</span><span class="p">)</span>
+    <span class="n">target_map_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;MAP_UPLOAD_PATH&#39;</span><span class="p">],</span> <span class="n">zip_file_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">target_map_path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_NAME_CONFLICT</span><span class="p">,</span> <span class="n">zip_file_name</span><span class="p">)])</span>
+
+    <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">zip_file_path</span><span class="p">,</span> <span class="n">target_map_path</span><span class="p">)</span>
+
+    <span class="n">generate_map_previews</span><span class="p">(</span><span class="n">target_map_path</span><span class="p">,</span> <span class="p">{</span>
+        <span class="mi">128</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;MAP_PREVIEW_PATH&#39;</span><span class="p">],</span> <span class="s1">&#39;small&#39;</span><span class="p">),</span>
+        <span class="mi">512</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;MAP_PREVIEW_PATH&#39;</span><span class="p">],</span> <span class="s1">&#39;large&#39;</span><span class="p">)</span>
+    <span class="p">})</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO map (display_name, map_type, battle_type, author)</span>
+<span class="s2">                        SELECT </span><span class="si">%(display_name)s</span><span class="s2">, </span><span class="si">%(map_type)s</span><span class="s2">, </span><span class="si">%(battle_type)s</span><span class="s2">, </span><span class="si">%(author)s</span><span class="s2"></span>
+<span class="s2">                        WHERE NOT EXISTS (</span>
+<span class="s2">                            SELECT display_name FROM map WHERE display_name = </span><span class="si">%(display_name)s</span><span class="s2"></span>
+<span class="s2">                        ) LIMIT 1&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">{</span>
+                           <span class="s1">&#39;display_name&#39;</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
+                           <span class="s1">&#39;map_type&#39;</span><span class="p">:</span> <span class="n">map_type</span><span class="p">,</span>
+                           <span class="s1">&#39;battle_type&#39;</span><span class="p">:</span> <span class="n">battle_type</span><span class="p">,</span>
+                           <span class="s1">&#39;author&#39;</span><span class="p">:</span> <span class="n">user_id</span>
+                       <span class="p">})</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO map_version (</span>
+<span class="s2">                            description, max_players, width, height, version, filename, ranked, map_id</span>
+<span class="s2">                        )</span>
+<span class="s2">                        VALUES (</span>
+<span class="s2">                            </span><span class="si">%(description)s</span><span class="s2">, </span><span class="si">%(max_players)s</span><span class="s2">, </span><span class="si">%(width)s</span><span class="s2">, </span><span class="si">%(height)s</span><span class="s2">, </span><span class="si">%(version)s</span><span class="s2">, </span><span class="si">%(filename)s</span><span class="s2">,</span>
+<span class="s2">                            </span><span class="si">%(ranked)s</span><span class="s2">,</span>
+<span class="s2">                            (SELECT id FROM map WHERE display_name = </span><span class="si">%(display_name)s</span><span class="s2">)</span>
+<span class="s2">                        )&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">{</span>
+                           <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="n">description</span><span class="p">,</span>
+                           <span class="s1">&#39;max_players&#39;</span><span class="p">:</span> <span class="n">max_players</span><span class="p">,</span>
+                           <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="n">width</span><span class="p">,</span>
+                           <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="n">height</span><span class="p">,</span>
+                           <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+                           <span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="s2">&quot;maps/&quot;</span> <span class="o">+</span> <span class="n">zip_file_name</span><span class="p">,</span>
+                           <span class="s1">&#39;display_name&#39;</span><span class="p">:</span> <span class="n">display_name</span><span class="p">,</span>
+                           <span class="s1">&#39;ranked&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">is_ranked</span> <span class="k">else</span> <span class="mi">0</span>
+                       <span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="validate_map_info"><a class="viewcode-back" href="../../api.html#api.maps.validate_map_info">[docs]</a><span class="k">def</span> <span class="nf">validate_map_info</span><span class="p">(</span><span class="n">map_info</span><span class="p">):</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;display_name&#39;</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_NAME_MISSING</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_DESCRIPTION_MISSING</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;max_players&#39;</span><span class="p">)</span> \
+            <span class="ow">or</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;battle_type&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;FFA&#39;</span><span class="p">:</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_FIRST_TEAM_FFA</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_TYPE_MISSING</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;size&#39;</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_SIZE_MISSING</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">map_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">):</span>
+        <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">MAP_VERSION_MISSING</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="extract_preview"><a class="viewcode-back" href="../../api.html#api.maps.extract_preview">[docs]</a><span class="k">def</span> <span class="nf">extract_preview</span><span class="p">(</span><span class="nb">zip</span><span class="p">,</span> <span class="n">member</span><span class="p">,</span> <span class="n">target_folder</span><span class="p">,</span> <span class="n">target_name</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">zip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">member</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+        <span class="n">target_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_folder</span><span class="p">,</span> <span class="n">target_name</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">target_path</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfileobj</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="map_exists"><a class="viewcode-back" href="../../api.html#api.maps.map_exists">[docs]</a><span class="k">def</span> <span class="nf">map_exists</span><span class="p">(</span><span class="n">display_name</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;select count(*) from map_version v join map m on m.id = v.map_id</span>
+<span class="s1">                          where m.display_name = </span><span class="si">%s</span><span class="s1"> and v.version = </span><span class="si">%s</span><span class="s1">&#39;&#39;&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">display_name</span><span class="p">,</span> <span class="n">version</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="can_upload_map"><a class="viewcode-back" href="../../api.html#api.maps.can_upload_map">[docs]</a><span class="k">def</span> <span class="nf">can_upload_map</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT count(*) FROM map WHERE display_name = </span><span class="si">%s</span><span class="s1"> AND author != </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">user_id</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../api.html">api</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

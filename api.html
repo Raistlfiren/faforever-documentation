@@ -1,0 +1,1302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>FAForever API &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="index.html" />
+    <link rel="next" title="Models" href="models.html" />
+    <link rel="prev" title="Welcome to Forged Alliance API Project’s documentation!" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="faforever-api">
+<h1>FAForever API<a class="headerlink" href="#faforever-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-api.achievements">
+<span id="achievement-endpoints"></span><h2>Achievement Endpoints<a class="headerlink" href="#module-api.achievements" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.achievements.achievements_get">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_get</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets an achievement definition.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+      <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;Kill your enemy in a ranked 1v1 game in under 15 minutes&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;experience_points&quot;</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;initial_state&quot;</span><span class="o">:</span> <span class="s2">&quot;REVEALED&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;Rusher&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;revealed_icon_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;total_steps&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;STANDARD&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;unlocked_icon_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;achievement&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query string language:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The preferred language to use for strings returned by this method. default is en.</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Query string region:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">The preferred region to use for strings returned by this method. default is US.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 404:</th><td class="field-body">achievement</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_increment">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_increment</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_increment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_increment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increments the steps of the achievement with the given ID for the currently authenticated player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/increment
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;current_steps&quot;</span><span class="o">:</span> <span class="nx">integer</span><span class="p">,</span>
+  <span class="s2">&quot;current_state&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+  <span class="s2">&quot;newly_unlocked&quot;</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query string steps:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The number of steps to increment.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_list">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all achievement definitions.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /achievements
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;Kill your enemy in a ranked 1v1 game in under 15 minutes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;experience_points&quot;</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;initial_state&quot;</span><span class="o">:</span> <span class="s2">&quot;REVEALED&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;Rusher&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;revealed_icon_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;total_steps&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;STANDARD&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;unlocked_icon_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;achievement&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query string language:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The preferred language to use for strings returned by this method. default is en.</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Query string region:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">The preferred region to use for strings returned by this method. default is US.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_list_player">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_list_player</code><span class="sig-paren">(</span><em>player_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_list_player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_list_player" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the progress of achievements for a player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /players/781/achievements
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;items&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;achievement_id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;state&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;current_steps&quot;</span><span class="o">:</span> <span class="nx">integer</span><span class="p">,</span>
+      <span class="s2">&quot;create_time&quot;</span><span class="o">:</span> <span class="kr">long</span><span class="p">,</span>
+      <span class="s2">&quot;update_time&quot;</span><span class="o">:</span> <span class="kr">long</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>player_id</strong> (<em>int</em>) &#8211; ID of the player.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_reveal">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_reveal</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_reveal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_reveal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reveals an achievement for the currently authenticated player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/reveal
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;current_state&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_set_steps_at_least">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_set_steps_at_least</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_set_steps_at_least"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_set_steps_at_least" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Sets the steps of an achievement. If the steps parameter is less than the current number of steps</dt>
+<dd>that the player already gained for the achievement, the achievement is not modified.</dd>
+</dl>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/setStepsAtLeast
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;current_steps&quot;</span><span class="o">:</span> <span class="nx">integer</span><span class="p">,</span>
+  <span class="s2">&quot;current_state&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+  <span class="s2">&quot;newly_unlocked&quot;</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query string steps:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The number of steps to increment.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_unlock">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_unlock</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_unlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_unlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unlocks an achievement for the currently authenticated player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/unlock
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;newly_unlocked&quot;</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.achievements_update_multiple">
+<code class="descclassname">api.achievements.</code><code class="descname">achievements_update_multiple</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#achievements_update_multiple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.achievements_update_multiple" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates multiple achievements for the currently authenticated player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /achievement/updateMultiple
+</pre></div>
+</div>
+<div class="highlight-http"><div class="highlight"><pre><span></span>{
+  &quot;updates&quot;: [
+    {
+        &quot;achievement_id&quot;: string,
+        &quot;update_type&quot;: string,
+        &quot;steps&quot;: integer
+    }
+  ]
+}
+
+``updateType`` being one of &quot;REVEAL&quot;, &quot;INCREMENT&quot;, &quot;UNLOCK&quot; or &quot;SET_STEPS_AT_LEAST&quot;
+``steps`` being mandatory only for update type `` INCREMENT`` and ``SET_STEPS_AT_LEAST``
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;updated_achievements&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;achievement_id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;current_state&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;current_steps&quot;</span><span class="o">:</span> <span class="nx">integer</span><span class="p">,</span>
+      <span class="s2">&quot;newly_unlocked&quot;</span><span class="o">:</span> <span class="kr">boolean</span><span class="p">,</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.increment_achievement">
+<code class="descclassname">api.achievements.</code><code class="descname">increment_achievement</code><span class="sig-paren">(</span><em>achievement_id</em>, <em>player_id</em>, <em>steps</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#increment_achievement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.increment_achievement" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.jwt_achievements_increment">
+<code class="descclassname">api.achievements.</code><code class="descname">jwt_achievements_increment</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#jwt_achievements_increment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.jwt_achievements_increment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.jwt_achievements_reveal">
+<code class="descclassname">api.achievements.</code><code class="descname">jwt_achievements_reveal</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#jwt_achievements_reveal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.jwt_achievements_reveal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.jwt_achievements_set_steps_at_least">
+<code class="descclassname">api.achievements.</code><code class="descname">jwt_achievements_set_steps_at_least</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#jwt_achievements_set_steps_at_least"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.jwt_achievements_set_steps_at_least" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.jwt_achievements_unlock">
+<code class="descclassname">api.achievements.</code><code class="descname">jwt_achievements_unlock</code><span class="sig-paren">(</span><em>achievement_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#jwt_achievements_unlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.jwt_achievements_unlock" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.jwt_achievements_update_multiple">
+<code class="descclassname">api.achievements.</code><code class="descname">jwt_achievements_update_multiple</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#jwt_achievements_update_multiple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.jwt_achievements_update_multiple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.reveal_achievement">
+<code class="descclassname">api.achievements.</code><code class="descname">reveal_achievement</code><span class="sig-paren">(</span><em>achievement_id</em>, <em>player_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#reveal_achievement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.reveal_achievement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reveals an achievement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>achievement_id</strong> &#8211; ID of the achievement to unlock</li>
+<li><strong>player_id</strong> &#8211; ID of the player to reveal the achievement for</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>If successful, this method returns a response body with the following structure:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;current_state&quot;</span><span class="p">:</span> <span class="n">string</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.set_steps_at_least">
+<code class="descclassname">api.achievements.</code><code class="descname">set_steps_at_least</code><span class="sig-paren">(</span><em>achievement_id</em>, <em>player_id</em>, <em>steps</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#set_steps_at_least"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.set_steps_at_least" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.unlock_achievement">
+<code class="descclassname">api.achievements.</code><code class="descname">unlock_achievement</code><span class="sig-paren">(</span><em>achievement_id</em>, <em>player_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#unlock_achievement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.unlock_achievement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unlocks a standard achievement. This function is NOT an endpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>achievement_id</strong> &#8211; ID of the achievement to unlock</li>
+<li><strong>player_id</strong> &#8211; ID of the player to unlock the achievement for</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>If successful, this method returns a dictionary with the following structure:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;newly_unlocked&quot;</span><span class="p">:</span> <span class="n">boolean</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.update_multiple">
+<code class="descclassname">api.achievements.</code><code class="descname">update_multiple</code><span class="sig-paren">(</span><em>player_id</em>, <em>updates</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#update_multiple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.update_multiple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.achievements.update_steps">
+<code class="descclassname">api.achievements.</code><code class="descname">update_steps</code><span class="sig-paren">(</span><em>achievement_id</em>, <em>player_id</em>, <em>steps</em>, <em>steps_function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/achievements.html#update_steps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.achievements.update_steps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increments the steps of an achievement. This function is NOT an endpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>achievement_id</strong> &#8211; ID of the achievement to increment</li>
+<li><strong>player_id</strong> &#8211; ID of the player to increment the achievement for</li>
+<li><strong>steps</strong> &#8211; The number of steps to increment</li>
+<li><strong>steps_function</strong> &#8211; The function to use to calculate the new steps value. Two parameters are passed; the current</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>step count and the parameter <code class="docutils literal"><span class="pre">steps</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">If successful, this method returns a dictionary with the following structure:<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;current_steps&quot;</span><span class="p">:</span> <span class="n">integer</span><span class="p">,</span>
+  <span class="s2">&quot;current_state&quot;</span><span class="p">:</span> <span class="n">string</span><span class="p">,</span>
+  <span class="s2">&quot;newly_unlocked&quot;</span><span class="p">:</span> <span class="n">boolean</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="authentication-endpoints">
+<h2>Authentication Endpoints<a class="headerlink" href="#authentication-endpoints" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-api.auth"></span><p>Holds the authorization url routes</p>
+<dl class="function">
+<dt id="api.auth.access_token">
+<code class="descclassname">api.auth.</code><code class="descname">access_token</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#access_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.access_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>The implementation of this endpoint is handled by the &#64;oauth.token_handler function</p>
+<p>Function left blank intentionally
+:return: None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.auth.authorize">
+<code class="descclassname">api.auth.</code><code class="descname">authorize</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#authorize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.authorize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.auth.jwt_auth">
+<code class="descclassname">api.auth.</code><code class="descname">jwt_auth</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#jwt_auth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.jwt_auth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.auth.load_user">
+<code class="descclassname">api.auth.</code><code class="descname">load_user</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#load_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.load_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.auth.login">
+<code class="descclassname">api.auth.</code><code class="descname">login</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#login"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.login" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.auth.redirect_url_is_valid">
+<code class="descclassname">api.auth.</code><code class="descname">redirect_url_is_valid</code><span class="sig-paren">(</span><em>redirect_url</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#redirect_url_is_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.redirect_url_is_valid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.auth.require_login">
+<code class="descclassname">api.auth.</code><code class="descname">require_login</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/auth.html#require_login"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.auth.require_login" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-api.avatars">
+<span id="avatar-endpoints"></span><h2>Avatar Endpoints<a class="headerlink" href="#module-api.avatars" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.avatars.avatar">
+<code class="descclassname">api.avatars.</code><code class="descname">avatar</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/avatars.html#avatar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.avatars.avatar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays individual avatars</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not working currently. Broken.</p>
+</div>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET, PUT /avatar/781
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>id</strong> (<em>int</em>) &#8211; The avatar being added to the system</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">Probably would be better to isolate methods GET and PUT methods...</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.avatars.avatars">
+<code class="descclassname">api.avatars.</code><code class="descname">avatars</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/avatars.html#avatars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.avatars.avatars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays avatars</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not working currently. Broken.</p>
+</div>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET, POST /avatar
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file</strong> (<em>file</em>) &#8211; The avatar being added to the system</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">Probably would be better to isolate methods GET and POST methods...</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-api.bugreports">
+<span id="bugreport-endpoints"></span><h2>Bugreport Endpoints<a class="headerlink" href="#module-api.bugreports" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.bugreports.add_status">
+<code class="descclassname">api.bugreports.</code><code class="descname">add_status</code><span class="sig-paren">(</span><em>bugreport_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/bugreports.html#add_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.bugreports.add_status" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.bugreports.create_bug">
+<code class="descclassname">api.bugreports.</code><code class="descname">create_bug</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/bugreports.html#create_bug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.bugreports.create_bug" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-api.events">
+<span id="event-endpoints"></span><h2>Event Endpoints<a class="headerlink" href="#module-api.events" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.events.events_list">
+<code class="descclassname">api.events.</code><code class="descname">events_list</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#events_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.events_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all event definitions.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /events
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;15b6c19a-6084-4e82-ada9-6c30e282191f&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;image_url&quot;</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;Seraphim wins&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;NUMERIC&quot;</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;15b6c19a-6084-4e82-ada9-6c30e282191f&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;event&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query string language:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The preferred language to use for strings returned by this method. default is en.</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Query string region:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">The preferred region to use for strings returned by this method. default is US.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.events.events_list_player">
+<code class="descclassname">api.events.</code><code class="descname">events_list_player</code><span class="sig-paren">(</span><em>player_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#events_list_player"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.events_list_player" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists the events for a player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /players/781/events
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+          <span class="s2">&quot;event_id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+          <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="nx">integer</span><span class="p">,</span>
+          <span class="s2">&quot;create_time&quot;</span><span class="o">:</span> <span class="kr">long</span><span class="p">,</span>
+          <span class="s2">&quot;update_time&quot;</span><span class="o">:</span> <span class="kr">long</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.events.events_record">
+<code class="descclassname">api.events.</code><code class="descname">events_record</code><span class="sig-paren">(</span><em>event_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#events_record"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.events_record" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.events.events_record_multiple">
+<code class="descclassname">api.events.</code><code class="descname">events_record_multiple</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#events_record_multiple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.events_record_multiple" title="Permalink to this definition">¶</a></dt>
+<dd><p>Records multiple events for the currently authenticated player.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /events/recordMultiple
+
+{
+   &quot;updates&quot;: [
+     {
+       &quot;event_id&quot;: string,
+       &quot;count&quot;: long
+     }
+   ]
+}
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;updated_events&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;event_id&quot;</span><span class="o">:</span> <span class="nx">string</span><span class="p">,</span>
+      <span class="s2">&quot;count&quot;</span><span class="o">:</span> <span class="kr">long</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.events.jwt_events_record_multiple">
+<code class="descclassname">api.events.</code><code class="descname">jwt_events_record_multiple</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#jwt_events_record_multiple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.jwt_events_record_multiple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.events.record_event">
+<code class="descclassname">api.events.</code><code class="descname">record_event</code><span class="sig-paren">(</span><em>event_id</em>, <em>player_id</em>, <em>count</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#record_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.record_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>Records an event. This function is NOT an endpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">If successful, this method returns a dictionary with the following structure:<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">long</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.events.record_multiple">
+<code class="descclassname">api.events.</code><code class="descname">record_multiple</code><span class="sig-paren">(</span><em>player_id</em>, <em>updates</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/events.html#record_multiple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.events.record_multiple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="game-endpoints">
+<h2>Game Endpoints<a class="headerlink" href="#game-endpoints" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-api.maps">
+<span id="map-endpoints"></span><h2>Map Endpoints<a class="headerlink" href="#module-api.maps" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.maps.can_upload_map">
+<code class="descclassname">api.maps.</code><code class="descname">can_upload_map</code><span class="sig-paren">(</span><em>name</em>, <em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#can_upload_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.can_upload_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.maps.enricher">
+<code class="descclassname">api.maps.</code><code class="descname">enricher</code><span class="sig-paren">(</span><em>map</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#enricher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.enricher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.maps.extract_preview">
+<code class="descclassname">api.maps.</code><code class="descname">extract_preview</code><span class="sig-paren">(</span><em>zip</em>, <em>member</em>, <em>target_folder</em>, <em>target_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#extract_preview"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.extract_preview" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.maps.file_allowed">
+<code class="descclassname">api.maps.</code><code class="descname">file_allowed</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#file_allowed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.file_allowed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.maps.laddermaps">
+<code class="descclassname">api.maps.</code><code class="descname">laddermaps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#laddermaps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.laddermaps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all maps of the current ladder map pool ( for 1v1)</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /maps/ladder1v1
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;battle_type&quot;</span><span class="o">:</span> <span class="s2">&quot;FFA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;&lt;LOC canis3v3_Description&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;display_name&quot;</span><span class="o">:</span> <span class="s2">&quot;canis3v3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;download_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/maps/canis3v3.v0001.zip&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;downloads&quot;</span><span class="o">:</span> <span class="mi">5970</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;map_type&quot;</span><span class="o">:</span> <span class="s2">&quot;skirmish&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;max_players&quot;</span><span class="o">:</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="s2">&quot;num_draws&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="mf">2.94119</span><span class="p">,</span>
+        <span class="s2">&quot;technical_name&quot;</span><span class="o">:</span> <span class="s2">&quot;canis3v3.v0001&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;thumbnail_url_large&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/map_previews/large/maps/canis3v3.v0001.zip&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;thumbnail_url_small&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/map_previews/small/maps/canis3v3.v0001.zip&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;times_played&quot;</span><span class="o">:</span> <span class="mi">1955</span><span class="p">,</span>
+        <span class="s2">&quot;version&quot;</span><span class="o">:</span> <span class="s2">&quot;1&quot;</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;map&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.maps.map_exists">
+<code class="descclassname">api.maps.</code><code class="descname">map_exists</code><span class="sig-paren">(</span><em>display_name</em>, <em>version</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#map_exists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.map_exists" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.maps.maps">
+<code class="descclassname">api.maps.</code><code class="descname">maps</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#maps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.maps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all map definitions.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /maps
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;battle_type&quot;</span><span class="o">:</span> <span class="s2">&quot;FFA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;&lt;LOC canis3v3_Description&gt;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;display_name&quot;</span><span class="o">:</span> <span class="s2">&quot;canis3v3&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;download_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/maps/canis3v3.v0001.zip&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;downloads&quot;</span><span class="o">:</span> <span class="mi">5970</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;map_type&quot;</span><span class="o">:</span> <span class="s2">&quot;skirmish&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;max_players&quot;</span><span class="o">:</span> <span class="mi">6</span><span class="p">,</span>
+        <span class="s2">&quot;num_draws&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="mf">2.94119</span><span class="p">,</span>
+        <span class="s2">&quot;technical_name&quot;</span><span class="o">:</span> <span class="s2">&quot;canis3v3.v0001&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;thumbnail_url_large&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/map_previews/large/canis3v3.v0001.png&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;thumbnail_url_small&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/map_previews/small/canis3v3.v0001.png&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;times_played&quot;</span><span class="o">:</span> <span class="mi">1955</span><span class="p">,</span>
+        <span class="s2">&quot;version&quot;</span><span class="o">:</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;author&quot;</span><span class="o">:</span> <span class="s2">&quot;Someone&quot;</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;map&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.maps.maps_upload">
+<code class="descclassname">api.maps.</code><code class="descname">maps_upload</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#maps_upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.maps_upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new map in the system</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /maps/upload
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="s2">&quot;ok&quot;</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query file file:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The file submitted (Must be ZIP)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">zip</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.maps.process_uploaded_map">
+<code class="descclassname">api.maps.</code><code class="descname">process_uploaded_map</code><span class="sig-paren">(</span><em>temp_map_path</em>, <em>is_ranked</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#process_uploaded_map"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.process_uploaded_map" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.maps.validate_map_info">
+<code class="descclassname">api.maps.</code><code class="descname">validate_map_info</code><span class="sig-paren">(</span><em>map_info</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/maps.html#validate_map_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.maps.validate_map_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-api.mods">
+<span id="mod-endpoints"></span><h2>Mod Endpoints<a class="headerlink" href="#module-api.mods" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.mods.enricher">
+<code class="descclassname">api.mods.</code><code class="descname">enricher</code><span class="sig-paren">(</span><em>mod</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mods.html#enricher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.mods.enricher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.mods.file_allowed">
+<code class="descclassname">api.mods.</code><code class="descname">file_allowed</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mods.html#file_allowed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.mods.file_allowed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.mods.mod">
+<code class="descclassname">api.mods.</code><code class="descname">mod</code><span class="sig-paren">(</span><em>mod_uid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mods.html#mod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.mods.mod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a specific mod definition.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /mods/DF8825E2-DDB0-11DC-90F3-3F9B55D89593
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+      <span class="s2">&quot;author&quot;</span><span class="o">:</span> <span class="s2">&quot;Sorian(Current) Brent Allen(Original)&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;create_time&quot;</span><span class="o">:</span> <span class="s2">&quot;2014-04-05T17:13:18+00:00&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;Terrain is cratered by heavy ordinance.&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;download_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/mods/Terrain%20Deform%20for%20FA.v0001.zip&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;downloads&quot;</span><span class="o">:</span> <span class="mi">93</span><span class="p">,</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;is_ranked&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;is_ui&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;likes&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;Terrain Deform for FA&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;version&quot;</span><span class="o">:</span> <span class="s2">&quot;1&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;mod&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.mods.mods">
+<code class="descclassname">api.mods.</code><code class="descname">mods</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mods.html#mods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.mods.mods" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all mod definitions.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /mods
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;author&quot;</span><span class="o">:</span> <span class="s2">&quot;Sorian(Current) Brent Allen(Original)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;create_time&quot;</span><span class="o">:</span> <span class="s2">&quot;2014-04-05T17:13:18+00:00&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="o">:</span> <span class="s2">&quot;Terrain is cratered by heavy ordinance.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;download_url&quot;</span><span class="o">:</span> <span class="s2">&quot;http://content.faforever.com/faf/vault/mods/Terrain%20Deform%20for%20FA.v0001.zip&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;downloads&quot;</span><span class="o">:</span> <span class="mi">93</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_ranked&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="s2">&quot;is_ui&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="s2">&quot;likes&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;Terrain Deform for FA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;version&quot;</span><span class="o">:</span> <span class="s2">&quot;1&quot;</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;mod&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.mods.mods_upload">
+<code class="descclassname">api.mods.</code><code class="descname">mods_upload</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/mods.html#mods_upload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.mods.mods_upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new mod in the system</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>POST /mods/upload
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="s2">&quot;ok&quot;</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query file file:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">The file submitted (Must be ZIP)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Type:</th><td class="field-body">zip</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-api.ranked1v1">
+<span id="ranked-1v1-endpoints"></span><h2>Ranked 1v1 Endpoints<a class="headerlink" href="#module-api.ranked1v1" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.ranked1v1.ranked1v1">
+<code class="descclassname">api.ranked1v1.</code><code class="descname">ranked1v1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/ranked1v1.html#ranked1v1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.ranked1v1.ranked1v1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lists all ranked 1v1 players.</p>
+<p><strong>Example Request</strong>:</p>
+<dl class="docutils">
+<dt><strong>Default Values</strong>:</dt>
+<dd><p class="first">page[number]=1</p>
+<p class="last">page[size]=5000</p>
+</dd>
+</dl>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /ranked1v1
+Accept: application/vnd.api+json
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;deviation&quot;</span><span class="o">:</span> <span class="mf">48.4808</span><span class="p">,</span>
+        <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;781&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;is_active&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="s2">&quot;login&quot;</span><span class="o">:</span> <span class="s2">&quot;Zock&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">2475.69</span><span class="p">,</span>
+        <span class="s2">&quot;num_games&quot;</span><span class="o">:</span> <span class="mi">1285</span><span class="p">,</span>
+        <span class="s2">&quot;ranking&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="mi">2330</span><span class="p">,</span>
+        <span class="s2">&quot;won_games&quot;</span><span class="o">:</span> <span class="mi">946</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;781&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;ranked1v1&quot;</span>
+    <span class="p">},</span>
+    <span class="p">...</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>page[number]</strong> (<em>int</em>) &#8211; The page number being requested (EX.: /ranked1v1?page[number]=2)</li>
+<li><strong>page[size]</strong> (<em>int</em>) &#8211; The total amount of players to grab by default (EX.: /ranked1v1?page[size]=10)</li>
+<li><strong>filter[isActive]</strong> (<em>boolean</em>) &#8211; Whether or not to filter active players or not (true or false) (EX.: /ranked1v1?filter[is_active]=true)</li>
+<li><strong>filter[player]</strong> (<em>name</em>) &#8211; Allows search functionality in the ranked1v1 endpoint based upon the players login name (EX.: /ranked1v1?filter[player]=Zock)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 200:</th><td class="field-body"><p class="first last">No error</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.ranked1v1.ranked1v1_get">
+<code class="descclassname">api.ranked1v1.</code><code class="descname">ranked1v1_get</code><span class="sig-paren">(</span><em>player_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/ranked1v1.html#ranked1v1_get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.ranked1v1.ranked1v1_get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a ranked player. Player must be active, played more than one ranked game, and must have statistics associated
+with he/she.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /ranked1v1/781
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+      <span class="s2">&quot;deviation&quot;</span><span class="o">:</span> <span class="mf">48.4808</span><span class="p">,</span>
+      <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;781&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;is_active&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;login&quot;</span><span class="o">:</span> <span class="s2">&quot;Zock&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;mean&quot;</span><span class="o">:</span> <span class="mf">2475.69</span><span class="p">,</span>
+      <span class="s2">&quot;num_games&quot;</span><span class="o">:</span> <span class="mi">1285</span><span class="p">,</span>
+      <span class="s2">&quot;ranking&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+      <span class="s2">&quot;rating&quot;</span><span class="o">:</span> <span class="mi">2330</span><span class="p">,</span>
+      <span class="s2">&quot;won_games&quot;</span><span class="o">:</span> <span class="mi">946</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;781&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;ranked1v1&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Status 404:</th><td class="field-body">No entry with this id was found</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.ranked1v1.ranked1v1_stats">
+<code class="descclassname">api.ranked1v1.</code><code class="descname">ranked1v1_stats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/ranked1v1.html#ranked1v1_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.ranked1v1.ranked1v1_stats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets all player stats sorted by rankings.</p>
+<p><strong>Example Request</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span>GET /ranked1v1/stats
+</pre></div>
+</div>
+<p><strong>Example Response</strong>:</p>
+<div class="highlight-http"><div class="highlight"><pre><span></span><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Vary</span><span class="o">:</span> <span class="l">Accept</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/javascript</span>
+
+<span class="p">{</span>
+  <span class="s2">&quot;data&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;attributes&quot;</span><span class="o">:</span> <span class="p">{</span>
+      <span class="s2">&quot;rating_distribution&quot;</span><span class="o">:</span> <span class="p">{</span>
+        <span class="s2">&quot;-100&quot;</span><span class="o">:</span> <span class="mi">206</span><span class="p">,</span>
+        <span class="s2">&quot;-200&quot;</span><span class="o">:</span> <span class="mi">192</span><span class="p">,</span>
+        <span class="s2">&quot;-300&quot;</span><span class="o">:</span> <span class="mi">137</span><span class="p">,</span>
+        <span class="s2">&quot;-400&quot;</span><span class="o">:</span> <span class="mi">77</span><span class="p">,</span>
+        <span class="s2">&quot;-500&quot;</span><span class="o">:</span> <span class="mi">15</span><span class="p">,</span>
+        <span class="s2">&quot;-600&quot;</span><span class="o">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s2">&quot;-700&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;0&quot;</span><span class="o">:</span> <span class="mi">268</span><span class="p">,</span>
+        <span class="s2">&quot;100&quot;</span><span class="o">:</span> <span class="mi">282</span><span class="p">,</span>
+        <span class="s2">&quot;1000&quot;</span><span class="o">:</span> <span class="mi">122</span><span class="p">,</span>
+        <span class="s2">&quot;1100&quot;</span><span class="o">:</span> <span class="mi">86</span><span class="p">,</span>
+        <span class="s2">&quot;1200&quot;</span><span class="o">:</span> <span class="mi">72</span><span class="p">,</span>
+        <span class="s2">&quot;1300&quot;</span><span class="o">:</span> <span class="mi">55</span><span class="p">,</span>
+        <span class="s2">&quot;1400&quot;</span><span class="o">:</span> <span class="mi">42</span><span class="p">,</span>
+        <span class="s2">&quot;1500&quot;</span><span class="o">:</span> <span class="mi">35</span><span class="p">,</span>
+        <span class="s2">&quot;1600&quot;</span><span class="o">:</span> <span class="mi">25</span><span class="p">,</span>
+        <span class="s2">&quot;1700&quot;</span><span class="o">:</span> <span class="mi">15</span><span class="p">,</span>
+        <span class="s2">&quot;1800&quot;</span><span class="o">:</span> <span class="mi">14</span><span class="p">,</span>
+        <span class="s2">&quot;1900&quot;</span><span class="o">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;200&quot;</span><span class="o">:</span> <span class="mi">284</span><span class="p">,</span>
+        <span class="s2">&quot;2000&quot;</span><span class="o">:</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="s2">&quot;2100&quot;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">&quot;2200&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">&quot;2300&quot;</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+        <span class="s2">&quot;300&quot;</span><span class="o">:</span> <span class="mi">316</span><span class="p">,</span>
+        <span class="s2">&quot;400&quot;</span><span class="o">:</span> <span class="mi">296</span><span class="p">,</span>
+        <span class="s2">&quot;500&quot;</span><span class="o">:</span> <span class="mi">239</span><span class="p">,</span>
+        <span class="s2">&quot;600&quot;</span><span class="o">:</span> <span class="mi">238</span><span class="p">,</span>
+        <span class="s2">&quot;700&quot;</span><span class="o">:</span> <span class="mi">208</span><span class="p">,</span>
+        <span class="s2">&quot;800&quot;</span><span class="o">:</span> <span class="mi">177</span><span class="p">,</span>
+        <span class="s2">&quot;900&quot;</span><span class="o">:</span> <span class="mi">140</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;id&quot;</span><span class="o">:</span> <span class="s2">&quot;/ranked1v1/stats&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="s2">&quot;ranked1v1_stats&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Status 200:</th><td class="field-body">No error</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">FAForever API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.achievements">Achievement Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authentication-endpoints">Authentication Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.avatars">Avatar Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.bugreports">Bugreport Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.events">Event Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#game-endpoints">Game Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.maps">Map Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.mods">Mod Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.ranked1v1">Ranked 1v1 Endpoints</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Forged Alliance API Project&#8217;s documentation!</a></li>
+      <li>Next: <a href="models.html" title="next chapter">Models</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/api.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.bugreports &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="../../index.html" />
+    <link rel="up" title="api" href="../api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for api.bugreports</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">faf.db</span> <span class="kn">as</span> <span class="nn">db</span>
+<span class="kn">from</span> <span class="nn">api.query_commons</span> <span class="kn">import</span> <span class="n">fetch_data</span>
+<span class="kn">from</span> <span class="nn">faf.api</span> <span class="kn">import</span> <span class="n">BugReportSchema</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">request</span>
+
+<span class="kn">from</span> <span class="nn">api</span> <span class="kn">import</span> <span class="n">app</span>
+<span class="kn">from</span> <span class="nn">faf.api.bugreport_schema</span> <span class="kn">import</span> <span class="n">BugReportStatusSchema</span>
+
+<span class="n">SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreports.id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreports.title&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreports.target&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;automatic&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreports.automatic&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;log&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreports.log&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;traceback&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreports.traceback&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreport_targets.ref&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreport_targets.name&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;url&#39;</span><span class="p">:</span> <span class="s1">&#39;bugreport_targets.url&#39;</span>
+<span class="p">}</span>
+
+<span class="n">TABLE</span> <span class="o">=</span> <span class="s2">&quot;bugreports INNER JOIN bugreport_targets on bugreports.target = bugreport_targets.id&quot;</span>
+<span class="n">MAX_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">1000</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/bugs&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="create_bug"><a class="viewcode-back" href="../../api.html#api.bugreports.create_bug">[docs]</a><span class="k">def</span> <span class="nf">create_bug</span><span class="p">():</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">BugReportSchema</span><span class="p">()</span>
+    <span class="n">results</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">schema</span><span class="o">.</span><span class="n">format_errors</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">400</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">make_report</span><span class="p">(</span><span class="o">**</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id, name, ref from bugreport_targets &quot;</span>
+                       <span class="s2">&quot;WHERE id = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">,))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">():</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO bugreport_targets (id, name, url, ref) &quot;</span>
+                           <span class="s2">&quot;VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                           <span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">ref</span><span class="p">))</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO bugreports (title, target, automatic, description, log, traceback)</span>
+<span class="s2">                          VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">automatic</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">log</span><span class="p">,</span>
+                        <span class="n">report</span><span class="o">.</span><span class="n">traceback</span><span class="p">))</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">lastrowid</span>
+
+    <span class="n">result</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">schema</span><span class="o">.</span><span class="n">format_errors</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">500</span>
+
+    <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="mi">201</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/bugs/&lt;bugreport_id&gt;/status&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="add_status"><a class="viewcode-back" href="../../api.html#api.bugreports.add_status">[docs]</a><span class="k">def</span> <span class="nf">add_status</span><span class="p">(</span><span class="n">bugreport_id</span><span class="p">):</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">BugReportStatusSchema</span><span class="p">()</span>
+    <span class="n">result</span><span class="p">,</span> <span class="n">errors</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">errors</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">schema</span><span class="o">.</span><span class="n">format_errors</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">400</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id from bugreports &quot;</span>
+                       <span class="s2">&quot;WHERE id = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">bugreport_id</span><span class="p">,</span> <span class="p">))</span>
+
+        <span class="n">row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{},</span> <span class="mi">404</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO bugreport_status (bugreport, status_code, url) &quot;</span>
+                       <span class="s2">&quot;VALUES (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">bugreport_id</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;status_code&#39;</span><span class="p">],</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]))</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">lastrowid</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="mi">201</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../api.html">api</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

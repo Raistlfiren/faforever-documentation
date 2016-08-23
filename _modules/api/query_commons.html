@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.query_commons &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="../../index.html" />
+    <link rel="up" title="api" href="../api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for api.query_commons</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">pymysql.cursors</span> <span class="kn">import</span> <span class="n">DictCursor</span>
+
+<span class="kn">from</span> <span class="nn">api.error</span> <span class="kn">import</span> <span class="n">ApiException</span><span class="p">,</span> <span class="n">Error</span><span class="p">,</span> <span class="n">ErrorCode</span>
+<span class="kn">from</span> <span class="nn">faf</span> <span class="kn">import</span> <span class="n">db</span>
+
+
+<div class="viewcode-block" id="get_select_expressions"><a class="viewcode-back" href="../../modules.html#api.query_commons.get_select_expressions">[docs]</a><span class="k">def</span> <span class="nf">get_select_expressions</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">field_expression_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns select expressions for all `fields` in `field_expression_dict`.</span>
+<span class="sd">    Example usage::</span>
+
+<span class="sd">        fields = [&#39;id&#39;, &#39;timestamp&#39;]</span>
+<span class="sd">        field_expression_dict = {</span>
+<span class="sd">            &#39;id&#39;: &#39;map.uid&#39;,</span>
+<span class="sd">            &#39;timestamp&#39;: &#39;UNIX_TIMESTAMP(t.date)&#39;,</span>
+<span class="sd">            &#39;likes&#39;: &#39;feature.likes&#39;</span>
+<span class="sd">        }</span>
+
+<span class="sd">        get_select_expressions(fields, field_expression_dict)</span>
+
+<span class="sd">    Result::</span>
+
+<span class="sd">        &quot;map.uid as id, UNIX_TIMESTAMP(t.date) as timestamp&quot;</span>
+
+<span class="sd">    :param fields: the list of fields to select from `field_expression_dict`. If `None` or empty, all fields will be</span>
+<span class="sd">    returned</span>
+<span class="sd">    :param field_expression_dict: a dictionary mapping field names to select expressions. The expressions must not</span>
+<span class="sd">    contain &quot;as&quot; clauses since they will be appended using the `field` (see example above)</span>
+<span class="sd">    :return: a select expressions string (see example above)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="n">field_expression_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="n">field_selects</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">field_expression_dict</span><span class="p">:</span>
+            <span class="n">field_selects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;{} AS `{}`&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field_expression_dict</span><span class="p">[</span><span class="n">field</span><span class="p">],</span> <span class="n">field</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">field_selects</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_order_by"><a class="viewcode-back" href="../../modules.html#api.query_commons.get_order_by">[docs]</a><span class="k">def</span> <span class="nf">get_order_by</span><span class="p">(</span><span class="n">sort_expression</span><span class="p">,</span> <span class="n">valid_fields</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts the `sort_expression` into an &quot;order by&quot; if all fields are in `field_expression_dict`</span>
+<span class="sd">    Example usage::</span>
+
+<span class="sd">        sort_expression = &#39;likes,-timestamp&#39;</span>
+<span class="sd">        field_expression_dict = {</span>
+<span class="sd">            &#39;id&#39;: &#39;map.uid&#39;,</span>
+<span class="sd">            &#39;timestamp&#39;: &#39;UNIX_TIMESTAMP(t.date)&#39;,</span>
+<span class="sd">            &#39;likes&#39;: &#39;feature.likes&#39;</span>
+<span class="sd">        }</span>
+
+<span class="sd">        get_order_by(sort_expression, field_expression_dict)</span>
+
+<span class="sd">    Result::</span>
+
+<span class="sd">        &quot;ORDER BY likes ASC, timestamp DESC&quot;</span>
+
+<span class="sd">    :param sort_expression: a json-api conform sort expression (see example above)</span>
+<span class="sd">    :param valid_fields: a list of valid sort fields</span>
+<span class="sd">    :return: an MySQL conform ORDER BY string (see example above) or an empty string if `sort_expression` is None or</span>
+<span class="sd">    empty</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sort_expression</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="n">sort_expressions</span> <span class="o">=</span> <span class="n">sort_expression</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+
+    <span class="n">order_bys</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">expression</span> <span class="ow">in</span> <span class="n">sort_expressions</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">expression</span> <span class="ow">or</span> <span class="n">expression</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">expression</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="s1">&#39;DESC&#39;</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">expression</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="s1">&#39;ASC&#39;</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">expression</span>
+
+        <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_fields</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">QUERY_INVALID_SORT_FIELD</span><span class="p">,</span> <span class="n">column</span><span class="p">)])</span>
+
+        <span class="n">order_bys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;`{}` {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">order</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">order_bys</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="k">return</span> <span class="s1">&#39;ORDER BY {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">order_bys</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_limit"><a class="viewcode-back" href="../../modules.html#api.query_commons.get_limit">[docs]</a><span class="k">def</span> <span class="nf">get_limit</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">limit</span><span class="p">):</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+    <span class="n">limit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">&#39;LIMIT {}, {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">limit</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fetch_data"><a class="viewcode-back" href="../../modules.html#api.query_commons.fetch_data">[docs]</a><span class="k">def</span> <span class="nf">fetch_data</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">root_select_expression_dict</span><span class="p">,</span> <span class="n">max_page_size</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+               <span class="n">enricher</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">nested_expression_dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Fetches data in an JSON-API conforming way.</span>
+
+<span class="sd">    :param schema: the marshmallow schema to use for serialization, provided by faftools: https://github.com/FAForever/faftools/tree/develop/faf/api </span>
+<span class="sd">    :param table: the table to select the data from (or any FROM expression, without the FROM)</span>
+<span class="sd">    :param root_select_expression_dict: a dictionary that maps API field names to select expressions</span>
+<span class="sd">    :param max_page_size: max number of items per page</span>
+<span class="sd">    :param request: the flask HTTP request</span>
+<span class="sd">    :param where: additional WHERE clauses, without the WHERE</span>
+<span class="sd">    :param args: arguments to use when building the SQL query (e.g. ``where=&quot;id = %(id)s&quot;, args=dict(id=id)``</span>
+<span class="sd">    :param many: ``True`` for selecting many entries, ``False`` for single entries</span>
+<span class="sd">    :param enricher: an option function to apply to each item BEFORE it&#39;s dumped using the schema</span>
+<span class="sd">    :param sort: order the query by given column name in asc order, prefix with &#39;-&#39; for desc order</span>
+<span class="sd">    :param nested_expression_dict: dict of nested objects to be found in select_expression_dict e.g.</span>
+<span class="sd">        nested_expression_dict = {&#39;nest_atr_name&#39; : { &#39;nest_atr_key&#39; : &#39;nest_atr_value&#39;}}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">requested_fields</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;fields[{}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema</span><span class="o">.</span><span class="n">Meta</span><span class="o">.</span><span class="n">type_</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sort</span><span class="p">:</span>
+        <span class="n">sort</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sort&#39;</span><span class="p">)</span>
+
+    <span class="n">select_dict</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">root_select_expression_dict</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">nested_dict</span> <span class="ow">in</span> <span class="n">nested_expression_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">select_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">nested_dict</span><span class="p">)</span>
+
+    <span class="c1"># Sanitize fields</span>
+    <span class="k">if</span> <span class="n">requested_fields</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">requested_fields</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">select_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="n">nested_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">requested_fields</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">nested_expression_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="k">for</span> <span class="n">nested_field</span> <span class="ow">in</span> <span class="n">nested_fields</span><span class="p">:</span>
+            <span class="n">fields</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="o">*</span><span class="n">nested_expression_dict</span><span class="p">[</span><span class="n">nested_field</span><span class="p">]])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">select_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+    <span class="n">id_selected</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="k">if</span> <span class="s1">&#39;id&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="c1"># ID must always be selected</span>
+        <span class="n">fields</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span>
+        <span class="n">id_selected</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="n">select_expressions</span> <span class="o">=</span> <span class="n">get_select_expressions</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">select_dict</span><span class="p">)</span>
+
+    <span class="n">limit_expression</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">order_by_expression</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">many</span><span class="p">:</span>
+        <span class="n">page</span><span class="p">,</span> <span class="n">page_size</span> <span class="o">=</span> <span class="n">get_page_attributes</span><span class="p">(</span><span class="n">max_page_size</span><span class="p">,</span> <span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">limit_expression</span> <span class="o">=</span> <span class="n">get_limit</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="n">page_size</span><span class="p">)</span>
+        <span class="n">order_by_expression</span> <span class="o">=</span> <span class="n">get_order_by</span><span class="p">(</span><span class="n">sort</span><span class="p">,</span> <span class="n">fields</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">where</span><span class="p">:</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="s2">&quot;WHERE {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">DictCursor</span><span class="p">)</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT {} FROM {} {} {} {}&quot;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">select_expressions</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">where</span><span class="p">,</span> <span class="n">order_by_expression</span><span class="p">,</span> <span class="n">limit_expression</span><span class="p">),</span>
+                       <span class="n">args</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">many</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">enricher</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">many</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+                <span class="n">enricher</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">result</span><span class="p">:</span>
+            <span class="n">enricher</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="n">many</span><span class="p">)</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="c1"># TODO `id` is treated specially, that means it&#39;s put into [&#39;data&#39;] and NOT into [&#39;attributes&#39;]</span>
+    <span class="c1"># Schema().loads() however only returns [&#39;attributes&#39;] - and I found no way to either change that, or add &#39;id&#39;</span>
+    <span class="c1"># to [&#39;attributes&#39;]. If there really is no clean solution, we either can&#39;t use loads(), or we use this ugly code.</span>
+    <span class="k">if</span> <span class="n">id_selected</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">many</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="s1">&#39;attributes&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="n">item</span><span class="p">[</span><span class="s1">&#39;attributes&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="s1">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="s1">&#39;attributes&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;attributes&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="get_page_attributes"><a class="viewcode-back" href="../../modules.html#api.query_commons.get_page_attributes">[docs]</a><span class="k">def</span> <span class="nf">get_page_attributes</span><span class="p">(</span><span class="n">max_page_size</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+    <span class="n">raw_page_size</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page[size]&#39;</span><span class="p">,</span> <span class="n">max_page_size</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">page_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_page_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">page_size</span> <span class="o">&gt;</span> <span class="n">max_page_size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">QUERY_INVALID_PAGE_SIZE</span><span class="p">,</span> <span class="n">page_size</span><span class="p">)])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">QUERY_INVALID_PAGE_SIZE</span><span class="p">,</span> <span class="n">raw_page_size</span><span class="p">)])</span>
+
+    <span class="n">raw_page</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page[number]&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_page</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">page</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">QUERY_INVALID_PAGE_NUMBER</span><span class="p">,</span> <span class="n">page</span><span class="p">)])</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">QUERY_INVALID_PAGE_NUMBER</span><span class="p">,</span> <span class="n">raw_page</span><span class="p">)])</span>
+
+    <span class="k">return</span> <span class="n">page</span><span class="p">,</span> <span class="n">page_size</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../api.html">api</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

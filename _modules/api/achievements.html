@@ -1,0 +1,705 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.achievements &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="../../index.html" />
+    <link rel="up" title="api" href="../api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for api.achievements</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">faf.api.achievement_schema</span> <span class="kn">import</span> <span class="n">AchievementSchema</span>
+<span class="kn">from</span> <span class="nn">faf.api.player_achievement_schema</span> <span class="kn">import</span> <span class="n">PlayerAchievementSchema</span>
+<span class="kn">from</span> <span class="nn">flask_jwt</span> <span class="kn">import</span> <span class="n">jwt_required</span><span class="p">,</span> <span class="n">current_identity</span>
+<span class="kn">from</span> <span class="nn">api</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">faf.db</span> <span class="kn">as</span> <span class="nn">db</span>
+
+<span class="kn">from</span> <span class="nn">api.error</span> <span class="kn">import</span> <span class="n">ApiException</span><span class="p">,</span> <span class="n">Error</span><span class="p">,</span> <span class="n">ErrorCode</span>
+<span class="kn">from</span> <span class="nn">api.query_commons</span> <span class="kn">import</span> <span class="n">fetch_data</span>
+
+<span class="n">MAX_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="n">ACHIEVEMENTS_TABLE</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;achievement_definitions ach</span>
+<span class="s2">                LEFT OUTER JOIN messages name_langReg</span>
+<span class="s2">                    ON ach.name_key = name_langReg.key</span>
+<span class="s2">                        AND name_langReg.language = </span><span class="si">%(language)s</span><span class="s2"></span>
+<span class="s2">                        AND name_langReg.region = </span><span class="si">%(region)s</span><span class="s2"></span>
+<span class="s2">                LEFT OUTER JOIN messages name_lang</span>
+<span class="s2">                    ON ach.name_key = name_lang.key</span>
+<span class="s2">                        AND name_lang.language = </span><span class="si">%(language)s</span><span class="s2"></span>
+<span class="s2">                LEFT OUTER JOIN messages name_def</span>
+<span class="s2">                    ON ach.name_key = name_def.key</span>
+<span class="s2">                        AND name_def.language = &#39;en&#39;</span>
+<span class="s2">                        AND name_def.region = &#39;US&#39;</span>
+<span class="s2">                LEFT OUTER JOIN messages desc_langReg</span>
+<span class="s2">                    ON ach.description_key = desc_langReg.key</span>
+<span class="s2">                        AND desc_langReg.language = </span><span class="si">%(language)s</span><span class="s2"></span>
+<span class="s2">                        AND desc_langReg.region = </span><span class="si">%(region)s</span><span class="s2"></span>
+<span class="s2">                LEFT OUTER JOIN messages desc_lang</span>
+<span class="s2">                    ON ach.description_key = desc_lang.key</span>
+<span class="s2">                        AND desc_lang.language = </span><span class="si">%(language)s</span><span class="s2"></span>
+<span class="s2">                LEFT OUTER JOIN messages desc_def</span>
+<span class="s2">                    ON ach.description_key = desc_def.key</span>
+<span class="s2">                        AND desc_def.language = &#39;en&#39;</span>
+<span class="s2">                        AND desc_def.region = &#39;US&#39;&quot;&quot;&quot;</span>
+
+<span class="n">ACHIEVEMENT_SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.type&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;order&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.order&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;total_steps&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.total_steps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;revealed_icon_url&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.revealed_icon_url&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;unlocked_icon_url&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.unlocked_icon_url&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;experience_points&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.experience_points&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;initial_state&#39;</span><span class="p">:</span> <span class="s1">&#39;ach.initial_state&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;COALESCE(name_langReg.value, name_lang.value, name_def.value)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;COALESCE(desc_langReg.value, desc_lang.value, desc_def.value)&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">PLAYER_ACHIEVEMENT_SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;achievement_id&#39;</span><span class="p">:</span> <span class="s1">&#39;achievement_id&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="s1">&#39;state&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;current_steps&#39;</span><span class="p">:</span> <span class="s1">&#39;current_steps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;create_time&#39;</span><span class="p">:</span> <span class="s1">&#39;create_time&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;update_time&#39;</span><span class="p">:</span> <span class="s1">&#39;update_time&#39;</span>
+<span class="p">}</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_list"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_list">[docs]</a><span class="k">def</span> <span class="nf">achievements_list</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists all achievement definitions.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /achievements</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;attributes&quot;: {</span>
+<span class="sd">                &quot;description&quot;: &quot;Kill your enemy in a ranked 1v1 game in under 15 minutes&quot;,</span>
+<span class="sd">                &quot;experience_points&quot;: 10,</span>
+<span class="sd">                &quot;id&quot;: &quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;,</span>
+<span class="sd">                &quot;initial_state&quot;: &quot;REVEALED&quot;,</span>
+<span class="sd">                &quot;name&quot;: &quot;Rusher&quot;,</span>
+<span class="sd">                &quot;revealed_icon_url&quot;: &quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;,</span>
+<span class="sd">                &quot;total_steps&quot;: null,</span>
+<span class="sd">                &quot;type&quot;: &quot;STANDARD&quot;,</span>
+<span class="sd">                &quot;unlocked_icon_url&quot;: &quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;id&quot;: &quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;,</span>
+<span class="sd">              &quot;type&quot;: &quot;achievement&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            ...</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :query string language: The preferred language to use for strings returned by this method. default is en.</span>
+<span class="sd">    :query string region: The preferred region to use for strings returned by this method. default is US.</span>
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">language</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;language&#39;</span><span class="p">,</span> <span class="s1">&#39;en&#39;</span><span class="p">)</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">AchievementSchema</span><span class="p">(),</span> <span class="n">ACHIEVEMENTS_TABLE</span><span class="p">,</span> <span class="n">ACHIEVEMENT_SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span>
+                      <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;language&#39;</span><span class="p">:</span> <span class="n">language</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">:</span> <span class="n">region</span><span class="p">})</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements/&lt;achievement_id&gt;&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_get"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_get">[docs]</a><span class="k">def</span> <span class="nf">achievements_get</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets an achievement definition.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: {</span>
+<span class="sd">            &quot;attributes&quot;: {</span>
+<span class="sd">              &quot;description&quot;: &quot;Kill your enemy in a ranked 1v1 game in under 15 minutes&quot;,</span>
+<span class="sd">              &quot;experience_points&quot;: 10,</span>
+<span class="sd">              &quot;id&quot;: &quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;,</span>
+<span class="sd">              &quot;initial_state&quot;: &quot;REVEALED&quot;,</span>
+<span class="sd">              &quot;name&quot;: &quot;Rusher&quot;,</span>
+<span class="sd">              &quot;revealed_icon_url&quot;: &quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;,</span>
+<span class="sd">              &quot;total_steps&quot;: null,</span>
+<span class="sd">              &quot;type&quot;: &quot;STANDARD&quot;,</span>
+<span class="sd">              &quot;unlocked_icon_url&quot;: &quot;http://content.faforever.com/achievements/02081bb0-3b7a-4a36-99ef-5ae5d92d7146.png&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            &quot;id&quot;: &quot;02081bb0-3b7a-4a36-99ef-5ae5d92d7146&quot;,</span>
+<span class="sd">            &quot;type&quot;: &quot;achievement&quot;</span>
+<span class="sd">          }</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :query string language: The preferred language to use for strings returned by this method. default is en.</span>
+<span class="sd">    :query string region: The preferred region to use for strings returned by this method. default is US.</span>
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    :status 404: achievement</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">language</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;language&#39;</span><span class="p">,</span> <span class="s1">&#39;en&#39;</span><span class="p">)</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;US&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">AchievementSchema</span><span class="p">(),</span> <span class="n">ACHIEVEMENTS_TABLE</span><span class="p">,</span> <span class="n">ACHIEVEMENT_SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span>
+                      <span class="n">where</span><span class="o">=</span><span class="s1">&#39;ach.id = </span><span class="si">%(id)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                      <span class="n">args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">achievement_id</span><span class="p">,</span> <span class="s1">&#39;language&#39;</span><span class="p">:</span> <span class="n">language</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">:</span> <span class="n">region</span><span class="p">},</span>
+                      <span class="n">many</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements/&lt;achievement_id&gt;/increment&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_increment"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_increment">[docs]</a><span class="k">def</span> <span class="nf">achievements_increment</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Increments the steps of the achievement with the given ID for the currently authenticated player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/increment</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;current_steps&quot;: integer,</span>
+<span class="sd">          &quot;current_state&quot;: string,</span>
+<span class="sd">          &quot;newly_unlocked&quot;: boolean,</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :query string steps: The number of steps to increment.</span>
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">increment_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/jwt/achievements/&lt;achievement_id&gt;/increment&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@jwt_required</span><span class="p">()</span>
+<div class="viewcode-block" id="jwt_achievements_increment"><a class="viewcode-back" href="../../api.html#api.achievements.jwt_achievements_increment">[docs]</a><span class="k">def</span> <span class="nf">jwt_achievements_increment</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">increment_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">current_identity</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements/&lt;achievement_id&gt;/setStepsAtLeast&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_set_steps_at_least"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_set_steps_at_least">[docs]</a><span class="k">def</span> <span class="nf">achievements_set_steps_at_least</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sets the steps of an achievement. If the steps parameter is less than the current number of steps</span>
+<span class="sd">     that the player already gained for the achievement, the achievement is not modified.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/setStepsAtLeast</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;current_steps&quot;: integer,</span>
+<span class="sd">          &quot;current_state&quot;: string,</span>
+<span class="sd">          &quot;newly_unlocked&quot;: boolean,</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :query string steps: The number of steps to increment.</span>
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">form</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">set_steps_at_least</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/jwt/achievements/&lt;achievement_id&gt;/setStepsAtLeast&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@jwt_required</span><span class="p">()</span>
+<div class="viewcode-block" id="jwt_achievements_set_steps_at_least"><a class="viewcode-back" href="../../api.html#api.achievements.jwt_achievements_set_steps_at_least">[docs]</a><span class="k">def</span> <span class="nf">jwt_achievements_set_steps_at_least</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;steps&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">set_steps_at_least</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">current_identity</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements/&lt;achievement_id&gt;/unlock&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_unlock"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_unlock">[docs]</a><span class="k">def</span> <span class="nf">achievements_unlock</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unlocks an achievement for the currently authenticated player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/unlock</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;newly_unlocked&quot;: boolean,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">unlock_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/jwt/achievements/&lt;achievement_id&gt;/unlock&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@jwt_required</span><span class="p">()</span>
+<div class="viewcode-block" id="jwt_achievements_unlock"><a class="viewcode-back" href="../../api.html#api.achievements.jwt_achievements_unlock">[docs]</a><span class="k">def</span> <span class="nf">jwt_achievements_unlock</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">unlock_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">current_identity</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements/&lt;achievement_id&gt;/reveal&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_reveal"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_reveal">[docs]</a><span class="k">def</span> <span class="nf">achievements_reveal</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reveals an achievement for the currently authenticated player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /achievement/02081bb0-3b7a-4a36-99ef-5ae5d92d7146/reveal</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;current_state&quot;: string,</span>
+<span class="sd">        }</span>
+
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">reveal_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/jwt/achievements/&lt;achievement_id&gt;/reveal&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@jwt_required</span><span class="p">()</span>
+<div class="viewcode-block" id="jwt_achievements_reveal"><a class="viewcode-back" href="../../api.html#api.achievements.jwt_achievements_reveal">[docs]</a><span class="k">def</span> <span class="nf">jwt_achievements_reveal</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">reveal_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">current_identity</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/achievements/updateMultiple&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;write_achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_update_multiple"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_update_multiple">[docs]</a><span class="k">def</span> <span class="nf">achievements_update_multiple</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updates multiple achievements for the currently authenticated player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /achievement/updateMultiple</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;updates&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">                &quot;achievement_id&quot;: string,</span>
+<span class="sd">                &quot;update_type&quot;: string,</span>
+<span class="sd">                &quot;steps&quot;: integer</span>
+<span class="sd">            }</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+<span class="sd">        ``updateType`` being one of &quot;REVEAL&quot;, &quot;INCREMENT&quot;, &quot;UNLOCK&quot; or &quot;SET_STEPS_AT_LEAST&quot;</span>
+<span class="sd">        ``steps`` being mandatory only for update type `` INCREMENT`` and ``SET_STEPS_AT_LEAST``</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;updated_achievements&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;achievement_id&quot;: string,</span>
+<span class="sd">              &quot;current_state&quot;: string,</span>
+<span class="sd">              &quot;current_steps&quot;: integer,</span>
+<span class="sd">              &quot;newly_unlocked&quot;: boolean,</span>
+<span class="sd">            }</span>
+<span class="sd">          ],</span>
+<span class="sd">        }</span>
+
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">player_id</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">oauth</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">id</span>
+
+    <span class="n">updates</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">update_multiple</span><span class="p">(</span><span class="n">player_id</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/jwt/achievements/updateMultiple&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="nd">@jwt_required</span><span class="p">()</span>
+<div class="viewcode-block" id="jwt_achievements_update_multiple"><a class="viewcode-back" href="../../api.html#api.achievements.jwt_achievements_update_multiple">[docs]</a><span class="k">def</span> <span class="nf">jwt_achievements_update_multiple</span><span class="p">():</span>
+    <span class="n">updates</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">json</span><span class="p">[</span><span class="s1">&#39;updates&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">update_multiple</span><span class="p">(</span><span class="n">current_identity</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/players/&lt;int:player_id&gt;/achievements&#39;</span><span class="p">)</span>
+<span class="nd">@oauth.require_oauth</span><span class="p">(</span><span class="s1">&#39;read_achievements&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="achievements_list_player"><a class="viewcode-back" href="../../api.html#api.achievements.achievements_list_player">[docs]</a><span class="k">def</span> <span class="nf">achievements_list_player</span><span class="p">(</span><span class="n">player_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists the progress of achievements for a player.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /players/781/achievements</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;items&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;id&quot;: string,</span>
+<span class="sd">              &quot;achievement_id&quot;: string,</span>
+<span class="sd">              &quot;state&quot;: string,</span>
+<span class="sd">              &quot;current_steps&quot;: integer,</span>
+<span class="sd">              &quot;create_time&quot;: long,</span>
+<span class="sd">              &quot;update_time&quot;: long</span>
+<span class="sd">            }</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    :param player_id: ID of the player.</span>
+<span class="sd">    :type player_id: int</span>
+<span class="sd">    :status 200: No error</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">PlayerAchievementSchema</span><span class="p">(),</span> <span class="s1">&#39;player_achievements&#39;</span><span class="p">,</span> <span class="n">PLAYER_ACHIEVEMENT_SELECT_EXPRESSIONS</span><span class="p">,</span>
+                      <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="s1">&#39;player_id = </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">player_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="increment_achievement"><a class="viewcode-back" href="../../api.html#api.achievements.increment_achievement">[docs]</a><span class="k">def</span> <span class="nf">increment_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">steps</span><span class="p">):</span>
+    <span class="n">steps_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">current_steps</span><span class="p">,</span> <span class="n">new_steps</span><span class="p">:</span> <span class="n">current_steps</span> <span class="o">+</span> <span class="n">new_steps</span>
+    <span class="k">return</span> <span class="n">update_steps</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">steps_function</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="set_steps_at_least"><a class="viewcode-back" href="../../api.html#api.achievements.set_steps_at_least">[docs]</a><span class="k">def</span> <span class="nf">set_steps_at_least</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">steps</span><span class="p">):</span>
+    <span class="n">steps_function</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">current_steps</span><span class="p">,</span> <span class="n">new_steps</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">current_steps</span><span class="p">,</span> <span class="n">new_steps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">update_steps</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">steps_function</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="update_steps"><a class="viewcode-back" href="../../api.html#api.achievements.update_steps">[docs]</a><span class="k">def</span> <span class="nf">update_steps</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">steps_function</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Increments the steps of an achievement. This function is NOT an endpoint.</span>
+
+<span class="sd">    :param achievement_id: ID of the achievement to increment</span>
+<span class="sd">    :param player_id: ID of the player to increment the achievement for</span>
+<span class="sd">    :param steps: The number of steps to increment</span>
+<span class="sd">    :param steps_function: The function to use to calculate the new steps value. Two parameters are passed; the current</span>
+<span class="sd">    step count and the parameter ``steps``</span>
+
+<span class="sd">    :return:</span>
+<span class="sd">        If successful, this method returns a dictionary with the following structure::</span>
+
+<span class="sd">            {</span>
+<span class="sd">              &quot;current_steps&quot;: integer,</span>
+<span class="sd">              &quot;current_state&quot;: string,</span>
+<span class="sd">              &quot;newly_unlocked&quot;: boolean,</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">achievement</span> <span class="o">=</span> <span class="n">achievements_get</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">)[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;attributes&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">achievement</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;INCREMENTAL&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">ACHIEVEMENT_CANT_INCREMENT_STANDARD</span><span class="p">,</span> <span class="n">achievement_id</span><span class="p">)])</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT</span>
+<span class="s2">                            current_steps,</span>
+<span class="s2">                            state</span>
+<span class="s2">                        FROM player_achievements</span>
+<span class="s2">                        WHERE achievement_id = </span><span class="si">%s</span><span class="s2"> AND player_id = </span><span class="si">%s</span><span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">))</span>
+
+        <span class="n">player_achievement</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+        <span class="n">new_state</span> <span class="o">=</span> <span class="s1">&#39;REVEALED&#39;</span>
+        <span class="n">newly_unlocked</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">current_steps</span> <span class="o">=</span> <span class="n">player_achievement</span><span class="p">[</span><span class="s1">&#39;current_steps&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">player_achievement</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">new_current_steps</span> <span class="o">=</span> <span class="n">steps_function</span><span class="p">(</span><span class="n">current_steps</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">new_current_steps</span> <span class="o">&gt;=</span> <span class="n">achievement</span><span class="p">[</span><span class="s1">&#39;total_steps&#39;</span><span class="p">]:</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="s1">&#39;UNLOCKED&#39;</span>
+            <span class="n">new_current_steps</span> <span class="o">=</span> <span class="n">achievement</span><span class="p">[</span><span class="s1">&#39;total_steps&#39;</span><span class="p">]</span>
+            <span class="n">newly_unlocked</span> <span class="o">=</span> <span class="n">player_achievement</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;UNLOCKED&#39;</span> <span class="k">if</span> <span class="n">player_achievement</span> <span class="k">else</span> <span class="bp">True</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO player_achievements (player_id, achievement_id, current_steps, state)</span>
+<span class="s2">                        VALUES</span>
+<span class="s2">                            (</span><span class="si">%(player_id)s</span><span class="s2">, </span><span class="si">%(achievement_id)s</span><span class="s2">, </span><span class="si">%(current_steps)s</span><span class="s2">, </span><span class="si">%(state)s</span><span class="s2">)</span>
+<span class="s2">                        ON DUPLICATE KEY UPDATE</span>
+<span class="s2">                            current_steps = VALUES(current_steps),</span>
+<span class="s2">                            state = VALUES(state)&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">{</span>
+                           <span class="s1">&#39;player_id&#39;</span><span class="p">:</span> <span class="n">player_id</span><span class="p">,</span>
+                           <span class="s1">&#39;achievement_id&#39;</span><span class="p">:</span> <span class="n">achievement_id</span><span class="p">,</span>
+                           <span class="s1">&#39;current_steps&#39;</span><span class="p">:</span> <span class="n">new_current_steps</span><span class="p">,</span>
+                           <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="n">new_state</span><span class="p">,</span>
+                       <span class="p">})</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">current_steps</span><span class="o">=</span><span class="n">new_current_steps</span><span class="p">,</span> <span class="n">current_state</span><span class="o">=</span><span class="n">new_state</span><span class="p">,</span> <span class="n">newly_unlocked</span><span class="o">=</span><span class="n">newly_unlocked</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="unlock_achievement"><a class="viewcode-back" href="../../api.html#api.achievements.unlock_achievement">[docs]</a><span class="k">def</span> <span class="nf">unlock_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unlocks a standard achievement. This function is NOT an endpoint.</span>
+
+<span class="sd">    :param achievement_id: ID of the achievement to unlock</span>
+<span class="sd">    :param player_id: ID of the player to unlock the achievement for</span>
+
+<span class="sd">    :return:</span>
+<span class="sd">        If successful, this method returns a dictionary with the following structure::</span>
+
+<span class="sd">            {</span>
+<span class="sd">              &quot;newly_unlocked&quot;: boolean,</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">newly_unlocked</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;SELECT type FROM achievement_definitions WHERE id = </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">achievement_id</span><span class="p">)</span>
+        <span class="n">achievement</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">achievement</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;STANDARD&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">ACHIEVEMENT_CANT_UNLOCK_INCREMENTAL</span><span class="p">,</span> <span class="n">achievement_id</span><span class="p">)])</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT</span>
+<span class="s2">                            state</span>
+<span class="s2">                        FROM player_achievements</span>
+<span class="s2">                        WHERE achievement_id = </span><span class="si">%s</span><span class="s2"> AND player_id = </span><span class="si">%s</span><span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">))</span>
+
+        <span class="n">player_achievement</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+        <span class="n">new_state</span> <span class="o">=</span> <span class="s1">&#39;UNLOCKED&#39;</span>
+        <span class="n">newly_unlocked</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">player_achievement</span> <span class="ow">or</span> <span class="n">player_achievement</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;UNLOCKED&#39;</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO player_achievements (player_id, achievement_id, state)</span>
+<span class="s2">                        VALUES</span>
+<span class="s2">                            (</span><span class="si">%(player_id)s</span><span class="s2">, </span><span class="si">%(achievement_id)s</span><span class="s2">, </span><span class="si">%(state)s</span><span class="s2">)</span>
+<span class="s2">                        ON DUPLICATE KEY UPDATE</span>
+<span class="s2">                            state = VALUES(state)&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">{</span>
+                           <span class="s1">&#39;player_id&#39;</span><span class="p">:</span> <span class="n">player_id</span><span class="p">,</span>
+                           <span class="s1">&#39;achievement_id&#39;</span><span class="p">:</span> <span class="n">achievement_id</span><span class="p">,</span>
+                           <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="n">new_state</span><span class="p">,</span>
+                       <span class="p">})</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">newly_unlocked</span><span class="o">=</span><span class="n">newly_unlocked</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="reveal_achievement"><a class="viewcode-back" href="../../api.html#api.achievements.reveal_achievement">[docs]</a><span class="k">def</span> <span class="nf">reveal_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reveals an achievement.</span>
+
+<span class="sd">    :param achievement_id: ID of the achievement to unlock</span>
+<span class="sd">    :param player_id: ID of the player to reveal the achievement for</span>
+
+<span class="sd">    :return:</span>
+<span class="sd">        If successful, this method returns a response body with the following structure::</span>
+
+<span class="sd">            {</span>
+<span class="sd">              &quot;current_state&quot;: string,</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">pymysql</span><span class="o">.</span><span class="n">cursors</span><span class="o">.</span><span class="n">DictCursor</span><span class="p">)</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;SELECT</span>
+<span class="s2">                            state</span>
+<span class="s2">                        FROM player_achievements</span>
+<span class="s2">                        WHERE achievement_id = </span><span class="si">%s</span><span class="s2"> AND player_id = </span><span class="si">%s</span><span class="s2">&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">))</span>
+
+        <span class="n">player_achievement</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">player_achievement</span><span class="p">[</span><span class="s1">&#39;state&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">player_achievement</span> <span class="k">else</span> <span class="s1">&#39;REVEALED&#39;</span>
+
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;INSERT INTO player_achievements (player_id, achievement_id, state)</span>
+<span class="s2">                        VALUES</span>
+<span class="s2">                            (</span><span class="si">%(player_id)s</span><span class="s2">, </span><span class="si">%(achievement_id)s</span><span class="s2">, </span><span class="si">%(state)s</span><span class="s2">)</span>
+<span class="s2">                        ON DUPLICATE KEY UPDATE</span>
+<span class="s2">                            state = VALUES(state)&quot;&quot;&quot;</span><span class="p">,</span>
+                       <span class="p">{</span>
+                           <span class="s1">&#39;player_id&#39;</span><span class="p">:</span> <span class="n">player_id</span><span class="p">,</span>
+                           <span class="s1">&#39;achievement_id&#39;</span><span class="p">:</span> <span class="n">achievement_id</span><span class="p">,</span>
+                           <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="n">new_state</span><span class="p">,</span>
+                       <span class="p">})</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">current_state</span><span class="o">=</span><span class="n">new_state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="update_multiple"><a class="viewcode-back" href="../../api.html#api.achievements.update_multiple">[docs]</a><span class="k">def</span> <span class="nf">update_multiple</span><span class="p">(</span><span class="n">player_id</span><span class="p">,</span> <span class="n">updates</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">updated_achievements</span><span class="o">=</span><span class="p">[])</span>
+
+    <span class="k">for</span> <span class="n">update</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+        <span class="n">achievement_id</span> <span class="o">=</span> <span class="n">update</span><span class="p">[</span><span class="s1">&#39;achievement_id&#39;</span><span class="p">]</span>
+        <span class="n">update_type</span> <span class="o">=</span> <span class="n">update</span><span class="p">[</span><span class="s1">&#39;update_type&#39;</span><span class="p">]</span>
+
+        <span class="n">update_result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">achievement_id</span><span class="o">=</span><span class="n">achievement_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">update_type</span> <span class="o">==</span> <span class="s1">&#39;REVEAL&#39;</span><span class="p">:</span>
+            <span class="n">reveal_result</span> <span class="o">=</span> <span class="n">reveal_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">)</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reveal_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;REVEALED&#39;</span>
+        <span class="k">elif</span> <span class="n">update_type</span> <span class="o">==</span> <span class="s1">&#39;UNLOCK&#39;</span><span class="p">:</span>
+            <span class="n">unlock_result</span> <span class="o">=</span> <span class="n">unlock_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">)</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;newly_unlocked&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">unlock_result</span><span class="p">[</span><span class="s1">&#39;newly_unlocked&#39;</span><span class="p">]</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;UNLOCKED&#39;</span>
+        <span class="k">elif</span> <span class="n">update_type</span> <span class="o">==</span> <span class="s1">&#39;INCREMENT&#39;</span><span class="p">:</span>
+            <span class="n">increment_result</span> <span class="o">=</span> <span class="n">increment_achievement</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">update</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">])</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_steps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">increment_result</span><span class="p">[</span><span class="s1">&#39;current_steps&#39;</span><span class="p">]</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">increment_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;newly_unlocked&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">increment_result</span><span class="p">[</span><span class="s1">&#39;newly_unlocked&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">update_type</span> <span class="o">==</span> <span class="s1">&#39;SET_STEPS_AT_LEAST&#39;</span><span class="p">:</span>
+            <span class="n">set_steps_at_least_result</span> <span class="o">=</span> <span class="n">set_steps_at_least</span><span class="p">(</span><span class="n">achievement_id</span><span class="p">,</span> <span class="n">player_id</span><span class="p">,</span> <span class="n">update</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">])</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_steps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">set_steps_at_least_result</span><span class="p">[</span><span class="s1">&#39;current_steps&#39;</span><span class="p">]</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">set_steps_at_least_result</span><span class="p">[</span><span class="s1">&#39;current_state&#39;</span><span class="p">]</span>
+            <span class="n">update_result</span><span class="p">[</span><span class="s1">&#39;newly_unlocked&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">set_steps_at_least_result</span><span class="p">[</span><span class="s1">&#39;newly_unlocked&#39;</span><span class="p">]</span>
+
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;updated_achievements&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">update_result</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../api.html">api</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

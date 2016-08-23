@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>api.mods &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="../../index.html" />
+    <link rel="up" title="api" href="../api.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for api.mods</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+
+<span class="kn">from</span> <span class="nn">faf.api</span> <span class="kn">import</span> <span class="n">ModSchema</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">werkzeug.utils</span> <span class="kn">import</span> <span class="n">secure_filename</span>
+
+<span class="kn">from</span> <span class="nn">api</span> <span class="kn">import</span> <span class="n">app</span>
+<span class="kn">from</span> <span class="nn">api.error</span> <span class="kn">import</span> <span class="n">ApiException</span><span class="p">,</span> <span class="n">ErrorCode</span>
+<span class="kn">from</span> <span class="nn">api.error</span> <span class="kn">import</span> <span class="n">Error</span>
+<span class="kn">from</span> <span class="nn">api.query_commons</span> <span class="kn">import</span> <span class="n">fetch_data</span>
+
+<span class="n">ALLOWED_EXTENSIONS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;zip&#39;</span><span class="p">]</span>
+<span class="n">MAX_PAGE_SIZE</span> <span class="o">=</span> <span class="mi">1000</span>
+
+<span class="n">SELECT_EXPRESSIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;uid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;description&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;version&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;author&#39;</span><span class="p">:</span> <span class="s1">&#39;author&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;is_ui&#39;</span><span class="p">:</span> <span class="s1">&#39;ui&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;create_time&#39;</span><span class="p">:</span> <span class="s1">&#39;date&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;downloads&#39;</span><span class="p">:</span> <span class="s1">&#39;downloads&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;likes&#39;</span><span class="p">:</span> <span class="s1">&#39;likes&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;times_played&#39;</span><span class="p">:</span> <span class="s1">&#39;played&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;is_ranked&#39;</span><span class="p">:</span> <span class="s1">&#39;ranked&#39;</span><span class="p">,</span>
+    <span class="c1"># download_url will be URL encoded and made absolute in enrich_mod</span>
+    <span class="s1">&#39;download_url&#39;</span><span class="p">:</span> <span class="s1">&#39;filename&#39;</span><span class="p">,</span>
+    <span class="c1"># thumbnail_url will be URL encoded and made absolute in enrich_mod</span>
+    <span class="s1">&#39;thumbnail_url&#39;</span><span class="p">:</span> <span class="s1">&#39;icon&#39;</span>
+<span class="p">}</span>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/mods/upload&#39;</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<div class="viewcode-block" id="mods_upload"><a class="viewcode-back" href="../../api.html#api.mods.mods_upload">[docs]</a><span class="k">def</span> <span class="nf">mods_upload</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a new mod in the system</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       POST /mods/upload</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        &quot;ok&quot;</span>
+
+<span class="sd">    :query file file: The file submitted (Must be ZIP)</span>
+<span class="sd">    :type: zip</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">file</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;file&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">file</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">UPLOAD_FILE_MISSING</span><span class="p">)])</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">file_allowed</span><span class="p">(</span><span class="nb">file</span><span class="o">.</span><span class="n">filename</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ApiException</span><span class="p">([</span><span class="n">Error</span><span class="p">(</span><span class="n">ErrorCode</span><span class="o">.</span><span class="n">UPLOAD_INVALID_FILE_EXTENSION</span><span class="p">,</span> <span class="o">*</span><span class="n">ALLOWED_EXTENSIONS</span><span class="p">)])</span>
+
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">secure_filename</span><span class="p">(</span><span class="nb">file</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+    <span class="nb">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;MOD_UPLOAD_PATH&#39;</span><span class="p">],</span> <span class="n">filename</span><span class="p">))</span>
+    <span class="k">return</span> <span class="s2">&quot;ok&quot;</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/mods/&lt;mod_uid&gt;&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="mod"><a class="viewcode-back" href="../../api.html#api.mods.mod">[docs]</a><span class="k">def</span> <span class="nf">mod</span><span class="p">(</span><span class="n">mod_uid</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gets a specific mod definition.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /mods/DF8825E2-DDB0-11DC-90F3-3F9B55D89593</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: {</span>
+<span class="sd">            &quot;attributes&quot;: {</span>
+<span class="sd">              &quot;author&quot;: &quot;Sorian(Current) Brent Allen(Original)&quot;,</span>
+<span class="sd">              &quot;create_time&quot;: &quot;2014-04-05T17:13:18+00:00&quot;,</span>
+<span class="sd">              &quot;description&quot;: &quot;Terrain is cratered by heavy ordinance.&quot;,</span>
+<span class="sd">              &quot;download_url&quot;: &quot;http://content.faforever.com/faf/vault/mods/Terrain%20Deform%20for%20FA.v0001.zip&quot;,</span>
+<span class="sd">              &quot;downloads&quot;: 93,</span>
+<span class="sd">              &quot;id&quot;: &quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;,</span>
+<span class="sd">              &quot;is_ranked&quot;: false,</span>
+<span class="sd">              &quot;is_ui&quot;: false,</span>
+<span class="sd">              &quot;likes&quot;: 1,</span>
+<span class="sd">              &quot;name&quot;: &quot;Terrain Deform for FA&quot;,</span>
+<span class="sd">              &quot;version&quot;: &quot;1&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            &quot;id&quot;: &quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;,</span>
+<span class="sd">            &quot;type&quot;: &quot;mod&quot;</span>
+<span class="sd">          }</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">ModSchema</span><span class="p">(),</span> <span class="s1">&#39;table_mod&#39;</span><span class="p">,</span> <span class="n">SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span>
+                        <span class="n">where</span><span class="o">=</span><span class="s2">&quot;`uid` = </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">mod_uid</span><span class="p">,</span> <span class="n">many</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">enricher</span><span class="o">=</span><span class="n">enricher</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;id&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;errors&#39;</span><span class="p">:</span> <span class="p">[{</span><span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;No mod with this uid was found&#39;</span><span class="p">}]},</span> <span class="mi">404</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<span class="nd">@app.route</span><span class="p">(</span><span class="s1">&#39;/mods&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="mods"><a class="viewcode-back" href="../../api.html#api.mods.mods">[docs]</a><span class="k">def</span> <span class="nf">mods</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Lists all mod definitions.</span>
+
+<span class="sd">    **Example Request**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">       GET /mods</span>
+
+<span class="sd">    **Example Response**:</span>
+
+<span class="sd">    .. sourcecode:: http</span>
+
+<span class="sd">        HTTP/1.1 200 OK</span>
+<span class="sd">        Vary: Accept</span>
+<span class="sd">        Content-Type: text/javascript</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;data&quot;: [</span>
+<span class="sd">            {</span>
+<span class="sd">              &quot;attributes&quot;: {</span>
+<span class="sd">                &quot;author&quot;: &quot;Sorian(Current) Brent Allen(Original)&quot;,</span>
+<span class="sd">                &quot;create_time&quot;: &quot;2014-04-05T17:13:18+00:00&quot;,</span>
+<span class="sd">                &quot;description&quot;: &quot;Terrain is cratered by heavy ordinance.&quot;,</span>
+<span class="sd">                &quot;download_url&quot;: &quot;http://content.faforever.com/faf/vault/mods/Terrain%20Deform%20for%20FA.v0001.zip&quot;,</span>
+<span class="sd">                &quot;downloads&quot;: 93,</span>
+<span class="sd">                &quot;id&quot;: &quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;,</span>
+<span class="sd">                &quot;is_ranked&quot;: false,</span>
+<span class="sd">                &quot;is_ui&quot;: false,</span>
+<span class="sd">                &quot;likes&quot;: 1,</span>
+<span class="sd">                &quot;name&quot;: &quot;Terrain Deform for FA&quot;,</span>
+<span class="sd">                &quot;version&quot;: &quot;1&quot;</span>
+<span class="sd">              },</span>
+<span class="sd">              &quot;id&quot;: &quot;DF8825E2-DDB0-11DC-90F3-3F9B55D89593&quot;,</span>
+<span class="sd">              &quot;type&quot;: &quot;mod&quot;</span>
+<span class="sd">            },</span>
+<span class="sd">            ...</span>
+<span class="sd">          ]</span>
+<span class="sd">        }</span>
+
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">fetch_data</span><span class="p">(</span><span class="n">ModSchema</span><span class="p">(),</span> <span class="s1">&#39;table_mod&#39;</span><span class="p">,</span> <span class="n">SELECT_EXPRESSIONS</span><span class="p">,</span> <span class="n">MAX_PAGE_SIZE</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">enricher</span><span class="o">=</span><span class="n">enricher</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="enricher"><a class="viewcode-back" href="../../api.html#api.mods.enricher">[docs]</a><span class="k">def</span> <span class="nf">enricher</span><span class="p">(</span><span class="n">mod</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s1">&#39;thumbnail_url&#39;</span> <span class="ow">in</span> <span class="n">mod</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mod</span><span class="p">[</span><span class="s1">&#39;thumbnail_url&#39;</span><span class="p">]:</span>
+            <span class="k">del</span> <span class="n">mod</span><span class="p">[</span><span class="s1">&#39;thumbnail_url&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mod</span><span class="p">[</span><span class="s1">&#39;thumbnail_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;{}/faf/vault/mods_thumbs/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;CONTENT_URL&#39;</span><span class="p">],</span> <span class="n">mod</span><span class="p">[</span><span class="s1">&#39;thumbnail_url&#39;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="s1">&#39;download_url&#39;</span> <span class="ow">in</span> <span class="n">mod</span><span class="p">:</span>
+        <span class="n">mod</span><span class="p">[</span><span class="s1">&#39;download_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;{}/faf/vault/{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;CONTENT_URL&#39;</span><span class="p">],</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">mod</span><span class="p">[</span><span class="s1">&#39;download_url&#39;</span><span class="p">]))</span></div>
+
+
+<div class="viewcode-block" id="file_allowed"><a class="viewcode-back" href="../../api.html#api.mods.file_allowed">[docs]</a><span class="k">def</span> <span class="nf">file_allowed</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">filename</span> <span class="ow">and</span> \
+           <span class="n">filename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ALLOWED_EXTENSIONS</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table Of Contents</a></h3>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Modules</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../api.html">api</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

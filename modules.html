@@ -1,0 +1,530 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Modules &mdash; Forged Alliance API Project v0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Forged Alliance API Project v0.1 documentation" href="index.html" />
+    <link rel="prev" title="Models" href="models.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="modules">
+<h1>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-api.deploy">
+<span id="api-deploy-module"></span><h2>api.deploy module<a class="headerlink" href="#module-api.deploy" title="Permalink to this headline">¶</a></h2>
+<p>Holds routes for deployment based off of Github events</p>
+<dl class="function">
+<dt id="api.deploy.deploy">
+<code class="descclassname">api.deploy.</code><code class="descname">deploy</code><span class="sig-paren">(</span><em>repository</em>, <em>remote_url</em>, <em>ref</em>, <em>sha</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#deploy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.deploy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform deployment on this machine
+:param repository: the repository to deploy
+:param ref: ref to fetch
+:param sha: hash to verify deployment with
+:return: (status: str, description: str)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.deploy.deploy_game">
+<code class="descclassname">api.deploy.</code><code class="descname">deploy_game</code><span class="sig-paren">(</span><em>repo_path: pathlib.Path</em>, <em>remote_url: pathlib.Path</em>, <em>ref: str</em>, <em>sha: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#deploy_game"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.deploy_game" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.deploy.deploy_web">
+<code class="descclassname">api.deploy.</code><code class="descname">deploy_web</code><span class="sig-paren">(</span><em>repo_path: pathlib.Path</em>, <em>remote_url: pathlib.Path</em>, <em>ref: str</em>, <em>sha: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#deploy_web"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.deploy_web" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.deploy.deployment">
+<code class="descclassname">api.deploy.</code><code class="descname">deployment</code><span class="sig-paren">(</span><em>repo</em>, <em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#deployment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.deployment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.deploy.deployments">
+<code class="descclassname">api.deploy.</code><code class="descname">deployments</code><span class="sig-paren">(</span><em>repo</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#deployments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.deployments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.deploy.github_hook">
+<code class="descclassname">api.deploy.</code><code class="descname">github_hook</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#github_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.github_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic github hook suitable for receiving github status events.
+:return:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.deploy.validate_github_request">
+<code class="descclassname">api.deploy.</code><code class="descname">validate_github_request</code><span class="sig-paren">(</span><em>body</em>, <em>signature</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/deploy.html#validate_github_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.deploy.validate_github_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-api.git">
+<span id="api-git-module"></span><h2>api.git module<a class="headerlink" href="#module-api.git" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.git.checkout_repo">
+<code class="descclassname">api.git.</code><code class="descname">checkout_repo</code><span class="sig-paren">(</span><em>repo_path: pathlib.Path</em>, <em>remote_url: pathlib.Path</em>, <em>ref: str</em>, <em>sha: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/git.html#checkout_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.git.checkout_repo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-api.github">
+<span id="api-github-module"></span><h2>api.github module<a class="headerlink" href="#module-api.github" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="api.github.Github">
+<em class="property">class </em><code class="descclassname">api.github.</code><code class="descname">Github</code><span class="sig-paren">(</span><em>session: requests.sessions.Session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/github.html#Github"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.github.Github" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Abstraction for the Github API.</p>
+<dl class="method">
+<dt id="api.github.Github.create_deployment">
+<code class="descname">create_deployment</code><span class="sig-paren">(</span><em>owner='FAForever'</em>, <em>repo=None</em>, <em>ref=''</em>, <em>environment=''</em>, <em>description=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/github.html#Github.create_deployment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.github.Github.create_deployment" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>owner</strong> &#8211; </li>
+<li><strong>repo</strong> &#8211; </li>
+<li><strong>ref</strong> &#8211; </li>
+<li><strong>environment</strong> &#8211; </li>
+<li><strong>description</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="api.github.Github.create_deployment_status">
+<code class="descname">create_deployment_status</code><span class="sig-paren">(</span><em>owner='FAForever'</em>, <em>repo=None</em>, <em>id=None</em>, <em>state=None</em>, <em>description=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/github.html#Github.create_deployment_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.github.Github.create_deployment_status" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>owner</strong> &#8211; </li>
+<li><strong>repo</strong> &#8211; </li>
+<li><strong>id</strong> &#8211; </li>
+<li><strong>state</strong> &#8211; </li>
+<li><strong>description</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="api.github.Github.deployment">
+<code class="descname">deployment</code><span class="sig-paren">(</span><em>owner='FAForever'</em>, <em>repo=None</em>, <em>id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/github.html#Github.deployment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.github.Github.deployment" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>owner</strong> &#8211; </li>
+<li><strong>repo</strong> &#8211; </li>
+<li><strong>id</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="api.github.Github.deployments">
+<code class="descname">deployments</code><span class="sig-paren">(</span><em>owner='FAForever'</em>, <em>repo=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/github.html#Github.deployments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.github.Github.deployments" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>owner</strong> &#8211; </li>
+<li><strong>repo</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="api.github.make_session">
+<code class="descclassname">api.github.</code><code class="descname">make_session</code><span class="sig-paren">(</span><em>user: str</em>, <em>token: str</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/github.html#make_session"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.github.make_session" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="api-invalid-usage-module">
+<h2>api.invalid_usage module<a class="headerlink" href="#api-invalid-usage-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-api.jwt_user">
+<span id="api-jwt-user-module"></span><h2>api.jwt_user module<a class="headerlink" href="#module-api.jwt_user" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="api.jwt_user.JwtUser">
+<em class="property">class </em><code class="descclassname">api.jwt_user.</code><code class="descname">JwtUser</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/jwt_user.html#JwtUser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.jwt_user.JwtUser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="classmethod">
+<dt id="api.jwt_user.JwtUser.get">
+<em class="property">classmethod </em><code class="descname">get</code><span class="sig-paren">(</span><em>username</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/jwt_user.html#JwtUser.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.jwt_user.JwtUser.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="api.jwt_user.JwtUser.get_by_id">
+<em class="property">classmethod </em><code class="descname">get_by_id</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/jwt_user.html#JwtUser.get_by_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.jwt_user.JwtUser.get_by_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-api.oauth_client">
+<span id="api-oauth-client-module"></span><h2>api.oauth_client module<a class="headerlink" href="#module-api.oauth_client" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="api.oauth_client.OAuthClient">
+<em class="property">class </em><code class="descclassname">api.oauth_client.</code><code class="descname">OAuthClient</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_client.html#OAuthClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_client.OAuthClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Representation of database table</p>
+<dl class="attribute">
+<dt id="api.oauth_client.OAuthClient.client_id">
+<code class="descname">client_id</code><a class="headerlink" href="#api.oauth_client.OAuthClient.client_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="api.oauth_client.OAuthClient.default_scopes">
+<code class="descname">default_scopes</code><a class="headerlink" href="#api.oauth_client.OAuthClient.default_scopes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="api.oauth_client.OAuthClient.get">
+<em class="property">classmethod </em><code class="descname">get</code><span class="sig-paren">(</span><em>client_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_client.html#OAuthClient.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_client.OAuthClient.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="api.oauth_client.OAuthClient.redirect_uris">
+<code class="descname">redirect_uris</code><a class="headerlink" href="#api.oauth_client.OAuthClient.redirect_uris" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="api.oauth_client.OAuthClient.validate_redirect_uri">
+<code class="descname">validate_redirect_uri</code><span class="sig-paren">(</span><em>redirect_uri</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_client.html#OAuthClient.validate_redirect_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_client.OAuthClient.validate_redirect_uri" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-api.oauth_handlers">
+<span id="api-oauth-handlers-module"></span><h2>api.oauth_handlers module<a class="headerlink" href="#module-api.oauth_handlers" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.oauth_handlers.get_client">
+<code class="descclassname">api.oauth_handlers.</code><code class="descname">get_client</code><span class="sig-paren">(</span><em>client_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_handlers.html#get_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_handlers.get_client" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.oauth_handlers.get_token">
+<code class="descclassname">api.oauth_handlers.</code><code class="descname">get_token</code><span class="sig-paren">(</span><em>access_token=None</em>, <em>refresh_token=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_handlers.html#get_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_handlers.get_token" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.oauth_handlers.set_token">
+<code class="descclassname">api.oauth_handlers.</code><code class="descname">set_token</code><span class="sig-paren">(</span><em>token</em>, <em>request</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_handlers.html#set_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_handlers.set_token" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-api.oauth_token">
+<span id="api-oauth-token-module"></span><h2>api.oauth_token module<a class="headerlink" href="#module-api.oauth_token" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="api.oauth_token.OAuthToken">
+<em class="property">class </em><code class="descclassname">api.oauth_token.</code><code class="descname">OAuthToken</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_token.html#OAuthToken"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_token.OAuthToken" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="classmethod">
+<dt id="api.oauth_token.OAuthToken.delete">
+<em class="property">classmethod </em><code class="descname">delete</code><span class="sig-paren">(</span><em>client_id</em>, <em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_token.html#OAuthToken.delete"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_token.OAuthToken.delete" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="api.oauth_token.OAuthToken.get">
+<em class="property">classmethod </em><code class="descname">get</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_token.html#OAuthToken.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_token.OAuthToken.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="api.oauth_token.OAuthToken.get_scope_string">
+<em class="property">static </em><code class="descname">get_scope_string</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_token.html#OAuthToken.get_scope_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_token.OAuthToken.get_scope_string" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="api.oauth_token.OAuthToken.insert">
+<em class="property">classmethod </em><code class="descname">insert</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/oauth_token.html#OAuthToken.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.oauth_token.OAuthToken.insert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="api.oauth_token.OAuthToken.scopes">
+<code class="descname">scopes</code><a class="headerlink" href="#api.oauth_token.OAuthToken.scopes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-api.query_commons">
+<span id="api-query-commons-module"></span><h2>api.query_commons module<a class="headerlink" href="#module-api.query_commons" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="api.query_commons.fetch_data">
+<code class="descclassname">api.query_commons.</code><code class="descname">fetch_data</code><span class="sig-paren">(</span><em>schema</em>, <em>table</em>, <em>root_select_expression_dict</em>, <em>max_page_size</em>, <em>request</em>, <em>where=''</em>, <em>args=None</em>, <em>many=True</em>, <em>enricher=None</em>, <em>sort=None</em>, <em>limit=True</em>, <em>**nested_expression_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/query_commons.html#fetch_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.query_commons.fetch_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetches data in an JSON-API conforming way.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>schema</strong> &#8211; the marshmallow schema to use for serialization, provided by faftools: <a class="reference external" href="https://github.com/FAForever/faftools/tree/develop/faf/api">https://github.com/FAForever/faftools/tree/develop/faf/api</a></li>
+<li><strong>table</strong> &#8211; the table to select the data from (or any FROM expression, without the FROM)</li>
+<li><strong>root_select_expression_dict</strong> &#8211; a dictionary that maps API field names to select expressions</li>
+<li><strong>max_page_size</strong> &#8211; max number of items per page</li>
+<li><strong>request</strong> &#8211; the flask HTTP request</li>
+<li><strong>where</strong> &#8211; additional WHERE clauses, without the WHERE</li>
+<li><strong>args</strong> &#8211; arguments to use when building the SQL query (e.g. <code class="docutils literal"><span class="pre">where=&quot;id</span> <span class="pre">=</span> <span class="pre">%(id)s&quot;,</span> <span class="pre">args=dict(id=id)</span></code></li>
+<li><strong>many</strong> &#8211; <code class="docutils literal"><span class="pre">True</span></code> for selecting many entries, <code class="docutils literal"><span class="pre">False</span></code> for single entries</li>
+<li><strong>enricher</strong> &#8211; an option function to apply to each item BEFORE it&#8217;s dumped using the schema</li>
+<li><strong>sort</strong> &#8211; order the query by given column name in asc order, prefix with &#8216;-&#8216; for desc order</li>
+<li><strong>nested_expression_dict</strong> &#8211; dict of nested objects to be found in select_expression_dict e.g.
+nested_expression_dict = {&#8216;nest_atr_name&#8217; : { &#8216;nest_atr_key&#8217; : &#8216;nest_atr_value&#8217;}}</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.query_commons.get_limit">
+<code class="descclassname">api.query_commons.</code><code class="descname">get_limit</code><span class="sig-paren">(</span><em>page</em>, <em>limit</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/query_commons.html#get_limit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.query_commons.get_limit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.query_commons.get_order_by">
+<code class="descclassname">api.query_commons.</code><code class="descname">get_order_by</code><span class="sig-paren">(</span><em>sort_expression</em>, <em>valid_fields</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/query_commons.html#get_order_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.query_commons.get_order_by" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the <cite>sort_expression</cite> into an &#8220;order by&#8221; if all fields are in <cite>field_expression_dict</cite>
+Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sort_expression</span> <span class="o">=</span> <span class="s1">&#39;likes,-timestamp&#39;</span>
+<span class="n">field_expression_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;map.uid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="s1">&#39;UNIX_TIMESTAMP(t.date)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;likes&#39;</span><span class="p">:</span> <span class="s1">&#39;feature.likes&#39;</span>
+<span class="p">}</span>
+
+<span class="n">get_order_by</span><span class="p">(</span><span class="n">sort_expression</span><span class="p">,</span> <span class="n">field_expression_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Result:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s2">&quot;ORDER BY likes ASC, timestamp DESC&quot;</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sort_expression</strong> &#8211; a json-api conform sort expression (see example above)</li>
+<li><strong>valid_fields</strong> &#8211; a list of valid sort fields</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">an MySQL conform ORDER BY string (see example above) or an empty string if <cite>sort_expression</cite> is None or</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>empty</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.query_commons.get_page_attributes">
+<code class="descclassname">api.query_commons.</code><code class="descname">get_page_attributes</code><span class="sig-paren">(</span><em>max_page_size</em>, <em>request</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/query_commons.html#get_page_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.query_commons.get_page_attributes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.query_commons.get_select_expressions">
+<code class="descclassname">api.query_commons.</code><code class="descname">get_select_expressions</code><span class="sig-paren">(</span><em>fields</em>, <em>field_expression_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api/query_commons.html#get_select_expressions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.query_commons.get_select_expressions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns select expressions for all <cite>fields</cite> in <cite>field_expression_dict</cite>.
+Example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">]</span>
+<span class="n">field_expression_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;map.uid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="s1">&#39;UNIX_TIMESTAMP(t.date)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;likes&#39;</span><span class="p">:</span> <span class="s1">&#39;feature.likes&#39;</span>
+<span class="p">}</span>
+
+<span class="n">get_select_expressions</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">field_expression_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Result:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="s2">&quot;map.uid as id, UNIX_TIMESTAMP(t.date) as timestamp&quot;</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fields</strong> &#8211; the list of fields to select from <cite>field_expression_dict</cite>. If <cite>None</cite> or empty, all fields will be</td>
+</tr>
+</tbody>
+</table>
+<p>returned
+:param field_expression_dict: a dictionary mapping field names to select expressions. The expressions must not
+contain &#8220;as&#8221; clauses since they will be appended using the <cite>field</cite> (see example above)
+:return: a select expressions string (see example above)</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-api">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-api" title="Permalink to this headline">¶</a></h2>
+<p>Forged Alliance Forever API project</p>
+<p>Distributed under GPLv3, see license.txt</p>
+<dl class="function">
+<dt id="api.after_request">
+<code class="descclassname">api.</code><code class="descname">after_request</code><span class="sig-paren">(</span><em>response</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api.html#after_request"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.after_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.api_init">
+<code class="descclassname">api.</code><code class="descname">api_init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api.html#api_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.api_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes flask. Call _after_ setting flask config.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="api.get_current_user">
+<code class="descclassname">api.</code><code class="descname">get_current_user</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/api.html#get_current_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.get_current_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.handle_api_exception">
+<code class="descclassname">api.</code><code class="descname">handle_api_exception</code><span class="sig-paren">(</span><em>error</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api.html#handle_api_exception"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.handle_api_exception" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.jwt_identity">
+<code class="descclassname">api.</code><code class="descname">jwt_identity</code><span class="sig-paren">(</span><em>payload</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api.html#jwt_identity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.jwt_identity" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="api.make_response_json">
+<code class="descclassname">api.</code><code class="descname">make_response_json</code><span class="sig-paren">(</span><em>rv</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/api.html#make_response_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#api.make_response_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override the flask make_response function to default to application/json
+for lists and dictionaries.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api.html">FAForever API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.deploy">api.deploy module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.git">api.git module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.github">api.github module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#api-invalid-usage-module">api.invalid_usage module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.jwt_user">api.jwt_user module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.oauth_client">api.oauth_client module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.oauth_handlers">api.oauth_handlers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.oauth_token">api.oauth_token module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api.query_commons">api.query_commons module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-api">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="models.html" title="previous chapter">Models</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/modules.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Forged Alliance Forever Team.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/modules.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
